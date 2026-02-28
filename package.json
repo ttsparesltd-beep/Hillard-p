@@ -1,0 +1,14 @@
+{
+  "name": "hillard-performance-reminders",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MOT and service reminder system for Hillard Performance",
+  "scripts": {
+    "reminders": "node reminders.js",
+    "test-reminder": "node reminders.js --test"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "nodemailer": "^6.9.0"
+  }
+}

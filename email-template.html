@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hillard Performance Reminder</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0b;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0a0b;padding:40px 20px;">
+  <tr>
+    <td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="padding-bottom:32px;text-align:center;">
+            <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 14px;">
+              <tr>
+                <td style="width:48px;height:48px;background:#e8291c;text-align:center;vertical-align:middle;border-radius:4px;">
+                  <span style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:18px;font-weight:900;color:#ffffff;letter-spacing:0.05em;">HP</span>
+                </td>
+              </tr>
+            </table>
+            <div style="font-size:20px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#f0f0f4;">HILLARD PERFORMANCE</div>
+            <div style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#6b6b7a;margin-top:4px;">Vehicle Reminder Service</div>
+          </td>
+        </tr>
+
+        <!-- MAIN CARD -->
+        <tr>
+          <td style="background:#111114;border:1px solid #2a2a32;border-radius:16px;overflow:hidden;">
+
+            <!-- Red top line -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="height:3px;background:linear-gradient(90deg,#e8291c,transparent);"></td>
+              </tr>
+            </table>
+
+            <!-- ALERT TYPE BANNER -->
+            <!-- MOT VERSION -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding:28px 32px 0;text-align:center;">
+                  <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 16px;">
+                    <tr>
+                      <td style="background:rgba(232,41,28,0.12);border:1px solid rgba(232,41,28,0.3);border-radius:24px;padding:6px 18px;">
+                        <span style="font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#e8291c;">⚠ MOT Due in 30 Days</span>
+                      </td>
+                    </tr>
+                  </table>
+                  <div style="font-size:26px;font-weight:800;letter-spacing:0.04em;color:#f0f0f4;margin-bottom:8px;">Time to book your MOT</div>
+                  <div style="font-size:14px;color:#6b6b7a;line-height:1.6;">Hi <strong style="color:#f0f0f4;">{{CUSTOMER_NAME}}</strong>, your MOT is due soon.<br>Don't leave it to the last minute — book now.</div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- VEHICLE CARD -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding:24px 32px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#18181d;border:1px solid #2a2a32;border-radius:12px;overflow:hidden;">
+                    <tr>
+                      <td style="padding:18px 20px;border-bottom:1px solid #2a2a32;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                          <tr>
+                            <td>
+                              <div style="font-size:18px;font-weight:800;letter-spacing:0.06em;color:#f0f0f4;">{{VEHICLE_MAKE}} {{VEHICLE_MODEL}}</div>
+                              <div style="margin-top:6px;">
+                                <span style="display:inline-block;background:#f0c000;color:#111111;font-size:13px;font-weight:800;letter-spacing:0.14em;padding:3px 12px;border-radius:4px;">{{VEHICLE_REG}}</span>
+                              </div>
+                            </td>
+                            <td style="text-align:right;vertical-align:top;">
+                              <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#6b6b7a;">{{VEHICLE_YEAR}}</div>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <!-- Stats row -->
+                    <tr>
+                      <td>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                          <tr>
+                            <td width="50%" style="padding:16px 20px;border-right:1px solid #2a2a32;text-align:center;">
+                              <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#6b6b7a;margin-bottom:4px;">MOT Expiry</div>
+                              <div style="font-size:18px;font-weight:800;color:#f59e0b;">{{MOT_EXPIRY_DATE}}</div>
+                            </td>
+                            <td width="50%" style="padding:16px 20px;text-align:center;">
+                              <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#6b6b7a;margin-bottom:4px;">Days Remaining</div>
+                              <div style="font-size:18px;font-weight:800;color:#e8291c;">{{DAYS_REMAINING}}</div>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- CTA BUTTON -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding:0 32px 28px;text-align:center;">
+                  <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                    <tr>
+                      <td style="background:#e8291c;border-radius:10px;">
+                        <a href="{{BOOKING_LINK}}" style="display:block;padding:14px 36px;font-size:14px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:#ffffff;text-decoration:none;">Book My MOT →</a>
+                      </td>
+                    </tr>
+                  </table>
+                  <div style="margin-top:14px;font-size:12px;color:#6b6b7a;">Or call us on <a href="tel:{{PHONE}}" style="color:#e8291c;text-decoration:none;">{{PHONE}}</a></div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- WHAT HAPPENS BOX -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding:0 32px 32px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#18181d;border:1px solid #2a2a32;border-radius:12px;padding:20px;">
+                    <tr>
+                      <td>
+                        <div style="font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#6b6b7a;margin-bottom:14px;">Why act now?</div>
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                          <tr>
+                            <td style="padding-bottom:10px;">
+                              <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                  <td style="width:20px;vertical-align:top;padding-top:1px;"><span style="color:#e8291c;font-size:14px;">✓</span></td>
+                                  <td style="font-size:13px;color:#a0a0b0;line-height:1.5;">Driving without a valid MOT can invalidate your insurance</td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding-bottom:10px;">
+                              <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                  <td style="width:20px;vertical-align:top;padding-top:1px;"><span style="color:#e8291c;font-size:14px;">✓</span></td>
+                                  <td style="font-size:13px;color:#a0a0b0;line-height:1.5;">Booking early means you pick your preferred slot</td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                  <td style="width:20px;vertical-align:top;padding-top:1px;"><span style="color:#e8291c;font-size:14px;">✓</span></td>
+                                  <td style="font-size:13px;color:#a0a0b0;line-height:1.5;">We'll flag any advisories before they become costly failures</td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="padding:28px 0 0;text-align:center;">
+            <div style="font-size:12px;color:#3a3a45;margin-bottom:8px;">Hillard Performance · {{GARAGE_ADDRESS}}</div>
+            <div style="font-size:11px;color:#3a3a45;">
+              You're receiving this because your vehicle is registered with My Garage.<br>
+              <a href="{{UNSUBSCRIBE_LINK}}" style="color:#3a3a45;text-decoration:underline;">Unsubscribe from reminders</a>
+            </div>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
