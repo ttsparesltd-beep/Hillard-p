@@ -266,6 +266,14 @@ async function loadCalendar() {
   document.getElementById('cal-wrap').style.display = 'none'
   busyDates = []
 
+  // Fetch blocked dates from Supabase
+  try {
+    const { data: blocked } = await supabase.from('blocked_dates').select('date')
+    if (blocked) {
+      busyDates = blocked.map(b => b.date)
+    }
+  } catch(e) {}
+
   // Try Google Calendar API
   try {
     const start = new Date(calYear, calMonth, 1).toISOString()
@@ -274,9 +282,10 @@ async function loadCalendar() {
     const res = await fetch(url)
     if (res.ok) {
       const data = await res.json()
-      busyDates = (data.items || []).map(e => {
+      const gcalDates = (data.items || []).map(e => {
         return e.start.date || (e.start.dateTime ? e.start.dateTime.substring(0,10) : null)
       }).filter(Boolean)
+      busyDates = [...new Set([...busyDates, ...gcalDates])]
       calendarLoaded = true
     } else if (res.status === 403) {
       // Calendar is private — show warning, default to weekdays available
