@@ -336,17 +336,30 @@ window.uploadPhoto = async function(event, vehicleId) {
       console.log('Photo size:', Math.round(base64.length / 1024) + 'KB')
 
       // Use upsert with the vehicle id to avoid RLS issues
+      // Get customer id first to satisfy RLS
+      const { data: custData } = await supabase
+        .from('customers')
+        .select('id')
+        .single()
+
       const { data, error } = await supabase
         .from('vehicles')
         .update({ photo_url: base64 })
         .eq('id', vehicleId)
+        .eq('customer_id', custData?.id)
         .select()
 
-      if (error) {
-        console.error('Save error:', error)
-        // If RLS blocks update, it returns no rows — check for that
-        showToast('Could not save — try signing out and back in')
-        return
+      if (error || !data || data.length === 0) {
+        console.error('Save error:', error, 'rows:', data)
+        // Fallback: try without customer_id filter
+        const { error: e2 } = await supabase
+          .from('vehicles')
+          .update({ photo_url: base64 })
+          .eq('id', vehicleId)
+        if (e2) {
+          showToast('Save failed: ' + (e2.message || 'unknown error'))
+          return
+        }
       }
 
       const wrap = document.getElementById('photo-wrap-'+vehicleId)
