@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Hillard Performance — Calendar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--red:#e8291c;--bg:#0a0a0b;--surface:#111114;--surface2:#18181d;--border:#2a2a32;--text:#f0f0f4;--text2:#a0a0b0;--muted:#6b6b7a;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding-bottom:80px;}
+nav.top{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 8px;}
+nav.top img{height:36px;}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:0.08em;}
+.main{padding:0 16px;}
+
+/* Calendar header */
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 0 12px;}
+.cal-month{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;}
+.cal-nav-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);}
+.cal-nav-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* Day labels */
+.cal-days-header{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.cal-day-label{text-align:center;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);padding:4px 0;}
+
+/* Calendar grid */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-cell{background:var(--surface);border:1px solid var(--border);border-radius:8px;min-height:52px;padding:4px;cursor:pointer;transition:border-color 0.2s;position:relative;}
+.cal-cell:hover{border-color:#3a3a45;}
+.cal-cell.today{border-color:var(--red);}
+.cal-cell.other-month{opacity:0.35;}
+.cal-cell.has-events{border-color:#3a3a45;}
+.cal-num{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:3px;}
+.cal-cell.today .cal-num{color:var(--red);}
+.cal-dots{display:flex;flex-wrap:wrap;gap:2px;}
+.cal-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot-mot{background:#e8291c;}
+.dot-service{background:#f0c000;}
+.dot-booking{background:#4a9eff;}
+.dot-history{background:#4ade80;}
+
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:12px;padding:12px 0 16px;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* Event list */
+.events-section{margin-top:4px;}
+.events-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.event-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;}
+.event-stripe{width:4px;height:40px;border-radius:2px;flex-shrink:0;}
+.event-info{flex:1;}
+.event-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.event-meta{font-size:12px;color:var(--muted);}
+.event-date{font-size:12px;color:var(--text2);white-space:nowrap;}
+.empty-events{text-align:center;padding:24px;color:var(--muted);font-size:13px;}
+
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:8px 0 20px;z-index:10;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;cursor:pointer;color:var(--muted);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;transition:color 0.2s;}
+.nav-item.active{color:var(--red);}
+.nav-item svg{width:22px;height:22px;}
+</style>
+</head>
+<body>
+<nav class="top">
+  <img src="logo.png" alt="Hillard Performance">
+  <div class="page-title">CALENDAR</div>
+  <div style="width:36px;"></div>
+</nav>
+
+<div class="main">
+  <div class="cal-header">
+    <button class="cal-nav-btn" onclick="changeMonth(-1)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="cal-month" id="cal-month-label">Loading...</div>
+    <button class="cal-nav-btn" onclick="changeMonth(1)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <div class="cal-days-header">
+    <div class="cal-day-label">Mon</div>
+    <div class="cal-day-label">Tue</div>
+    <div class="cal-day-label">Wed</div>
+    <div class="cal-day-label">Thu</div>
+    <div class="cal-day-label">Fri</div>
+    <div class="cal-day-label">Sat</div>
+    <div class="cal-day-label">Sun</div>
+  </div>
+
+  <div class="cal-grid" id="cal-grid"></div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot dot-mot"></div>MOT due</div>
+    <div class="legend-item"><div class="legend-dot dot-service"></div>Service due</div>
+    <div class="legend-item"><div class="legend-dot dot-booking"></div>Pending booking</div>
+    <div class="legend-item"><div class="legend-dot dot-history"></div>Confirmed / done</div>
+  </div>
+
+  <div class="events-section">
+    <div class="events-title" id="events-title">This month</div>
+    <div id="events-list"><div class="empty-events">Loading events...</div></div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <div class="nav-item" onclick="window.location='index.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Garage
+  </div>
+  <div class="nav-item" onclick="window.location='hillard-invoices.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices
+  </div>
+  <div class="nav-item active" onclick="window.location='hillard-calendar.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendar
+  </div>
+  <div class="nav-item" onclick="window.location='hillard-service-history.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>History
+  </div>
+  <div class="nav-item" onclick="window.location='hillard-account.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Account
+  </div>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const { createClient } = window.supabase
+const sbClient = window.supabase.createClient(
+  'https://ixgotsabbqkkxzsxnwtr.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4Z290c2FiYnFra3h6c3hud3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTQwOTEsImV4cCI6MjA4Nzg3MDA5MX0.NNH_JEmEEvaMYuM_2F9F4qLqOFXoKb68NM-Ac3PDXyA'
+)
+
+let currentDate = new Date()
+let currentYear = currentDate.getFullYear()
+let currentMonth = currentDate.getMonth()
+let selectedDay = null
+let allEvents = []
+let customerId = null
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+
+async function init() {
+  const { data: { session } } = await sbClient.auth.getSession()
+  if (!session) { window.location.href = '/login.html'; return }
+
+  let { data: customer } = await sbClient.from('customers').select('*').eq('user_id', session.user.id).single()
+  if (!customer) {
+    const { data: nc } = await sbClient.from('customers').insert({
+      user_id: session.user.id, email: session.user.email,
+      first_name: session.user.email.split('@')[0], last_name: ''
+    }).select().single()
+    customer = nc
+  }
+  customerId = customer.id
+
+  await loadEvents()
+  renderCalendar()
+  renderEventsList(currentYear, currentMonth, null)
+}
+
+async function loadEvents() {
+  allEvents = []
+
+  // MOT expiry dates
+  const { data: vehicles } = await sbClient.from('vehicles')
+    .select('id, registration, make, model, mot_expiry, service_due')
+    .eq('customer_id', customerId)
+
+  for (const v of (vehicles || [])) {
+    const label = [v.make, v.model, v.registration].filter(Boolean).join(' ')
+    if (v.mot_expiry) {
+      allEvents.push({ date: v.mot_expiry, type: 'mot', title: 'MOT Due', meta: label, color: '#e8291c' })
+    }
+    if (v.service_due) {
+      allEvents.push({ date: v.service_due, type: 'service', title: 'Service Due', meta: label, color: '#f0c000' })
+    }
+  }
+
+  // Bookings
+  const { data: bookings } = await sbClient.from('bookings')
+    .select('id, preferred_date, confirmed_date, repair_type, status, vehicle_id')
+    .eq('customer_id', customerId)
+    .order('preferred_date', { ascending: true })
+
+  for (const b of (bookings || [])) {
+    const useDate = b.confirmed_date || b.preferred_date
+    if (!useDate) continue
+    // Match vehicle from already-loaded vehicles list
+    const matchedVehicle = (await sbClient.from('vehicles').select('registration,make,model').eq('id', b.vehicle_id).single()).data
+    const vLabel = matchedVehicle ? [matchedVehicle.make, matchedVehicle.model, matchedVehicle.registration].filter(Boolean).join(' ') : ''
+    const isPast = new Date(useDate) < new Date()
+    const isConfirmed = b.status === 'confirmed'
+    let type, color
+    if (isPast) { type = 'history'; color = '#4ade80' }
+    else if (isConfirmed) { type = 'booking'; color = '#4ade80' }
+    else { type = 'booking'; color = '#4a9eff' }
+    allEvents.push({
+      date: useDate,
+      type,
+      title: isConfirmed ? `✓ ${b.repair_type || 'Booking'}` : (b.repair_type || 'Booking Request'),
+      meta: vLabel,
+      status: isConfirmed ? 'confirmed' : b.status,
+      color
+    })
+  }
+}
+
+function getEventsForDate(dateStr) {
+  return allEvents.filter(e => e.date && e.date.substring(0, 10) === dateStr)
+}
+
+function getEventsForMonth(year, month) {
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}`
+  return allEvents.filter(e => e.date && e.date.startsWith(prefix))
+}
+
+function renderCalendar() {
+  document.getElementById('cal-month-label').textContent = `${MONTHS[currentMonth]} ${currentYear}`
+
+  const grid = document.getElementById('cal-grid')
+  grid.innerHTML = ''
+
+  const firstDay = new Date(currentYear, currentMonth, 1)
+  const lastDay = new Date(currentYear, currentMonth + 1, 0)
+  const today = new Date()
+  const todayStr = today.toISOString().substring(0, 10)
+
+  // Monday-first: 0=Mon, 6=Sun
+  let startDow = firstDay.getDay() - 1
+  if (startDow < 0) startDow = 6
+
+  // Fill leading blanks with prev month days
+  for (let i = 0; i < startDow; i++) {
+    const d = new Date(currentYear, currentMonth, -startDow + i + 1)
+    const dateStr = d.toISOString().substring(0, 10)
+    const events = getEventsForDate(dateStr)
+    grid.appendChild(makeCell(d.getDate(), dateStr, events, true))
+  }
+
+  // Current month days
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    const events = getEventsForDate(dateStr)
+    const cell = makeCell(d, dateStr, events, false)
+    if (dateStr === todayStr) cell.classList.add('today')
+    grid.appendChild(cell)
+  }
+
+  // Fill trailing blanks
+  const totalCells = startDow + lastDay.getDate()
+  const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7)
+  for (let i = 1; i <= remaining; i++) {
+    const dateStr = `${currentYear}-${String(currentMonth + 2).padStart(2,'0')}-${String(i).padStart(2,'0')}`
+    const events = getEventsForDate(dateStr)
+    grid.appendChild(makeCell(i, dateStr, events, true))
+  }
+}
+
+function makeCell(dayNum, dateStr, events, otherMonth) {
+  const cell = document.createElement('div')
+  cell.className = 'cal-cell' + (otherMonth ? ' other-month' : '') + (events.length ? ' has-events' : '')
+  cell.innerHTML = `<div class="cal-num">${dayNum}</div><div class="cal-dots">${
+    events.slice(0, 4).map(e => `<div class="cal-dot dot-${e.type}"></div>`).join('')
+  }</div>`
+  cell.onclick = () => {
+    selectedDay = dateStr
+    document.querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'))
+    cell.style.borderColor = '#e8291c'
+    const dayEvents = getEventsForDate(dateStr)
+    const d = new Date(dateStr + 'T12:00:00')
+    const label = d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })
+    document.getElementById('events-title').textContent = label
+    renderEventCards(dayEvents, label)
+  }
+  return cell
+}
+
+function renderEventsList(year, month, dayStr) {
+  const events = dayStr ? getEventsForDate(dayStr) : getEventsForMonth(year, month)
+  const title = dayStr ? dayStr : `${MONTHS[month]} ${year}`
+  document.getElementById('events-title').textContent = dayStr
+    ? new Date(dayStr + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })
+    : `${MONTHS[month]} ${year}`
+  renderEventCards(events, title)
+}
+
+function renderEventCards(events, label) {
+  const list = document.getElementById('events-list')
+  if (!events.length) {
+    list.innerHTML = '<div class="empty-events">No events</div>'
+    return
+  }
+  list.innerHTML = events.map(e => {
+    const d = e.date ? new Date(e.date + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : ''
+    return `<div class="event-card">
+      <div class="event-stripe" style="background:${e.color}"></div>
+      <div class="event-info">
+        <div class="event-title">${e.title}</div>
+        <div class="event-meta">${e.meta || ''}${e.status ? ` · ${e.status}` : ''}</div>
+      </div>
+      <div class="event-date">${d}</div>
+    </div>`
+  }).join('')
+}
+
+function changeMonth(dir) {
+  currentMonth += dir
+  if (currentMonth > 11) { currentMonth = 0; currentYear++ }
+  if (currentMonth < 0) { currentMonth = 11; currentYear-- }
+  selectedDay = null
+  renderCalendar()
+  renderEventsList(currentYear, currentMonth, null)
+}
+
+init()
+</script>
+</body>
+</html>
