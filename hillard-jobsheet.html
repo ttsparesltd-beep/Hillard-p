@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hillard Performance — Job Sheets</title>
+
+<!-- ============================================================= -->
+<!--  SUPABASE CONFIG  — EDIT THESE TWO LINES, THEN SAVE/UPLOAD    -->
+<!--  Find them in Supabase: Project Settings → API                -->
+<!-- ============================================================= -->
+<script>
+  const SUPABASE_URL  = "https://YOUR-PROJECT.supabase.co";   // <-- paste your Project URL
+  const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";            // <-- paste your anon/public key
+  const VAT_RATE = 0.20;                                       // UK VAT (20%). Change if needed.
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0d0f12;
+    --bg-2:#15181d;
+    --panel:#f6f3ec;        /* paper */
+    --ink:#1c1c1c;
+    --ink-soft:#5a5a5a;
+    --line:#cdc7ba;
+    --amber:#ff5e1a;
+    --amber-soft:#ff7d44;
+    --steel:#3a4250;
+    --good:#1f9d57;
+    --bad:#d23b2e;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #1b2027 0%, transparent 60%),
+      repeating-linear-gradient(45deg,#0e1115 0 18px,#101318 18px 36px);
+    color:#e8e6e0;
+    font-family:'Archivo',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:30;
+    background:linear-gradient(180deg,#141821, #0d0f12);
+    border-bottom:2px solid var(--amber);
+    padding:14px clamp(16px,4vw,40px);
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+    box-shadow:0 8px 30px rgba(0,0,0,.5);
+  }
+  .brand{display:flex;align-items:baseline;gap:12px;line-height:1;}
+  .brand .mark{
+    font-family:'Anton',sans-serif;font-size:clamp(26px,3.6vw,40px);
+    letter-spacing:.5px;text-transform:uppercase;color:#fff;
+  }
+  .brand .mark b{color:var(--amber);}
+  .brand .sub{
+    font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;
+    text-transform:uppercase;color:#8b93a1;
+  }
+  .tabs{display:flex;gap:6px;margin-left:auto;}
+  .tab{
+    font-family:'Archivo';font-weight:700;font-size:13px;letter-spacing:.5px;
+    text-transform:uppercase;color:#aeb4bf;background:transparent;
+    border:1px solid #2a313c;padding:9px 16px;border-radius:8px;cursor:pointer;
+    transition:.15s;
+  }
+  .tab:hover{color:#fff;border-color:#3c4busy;}
+  .tab.active{background:var(--amber);color:#1a1205;border-color:var(--amber);}
+
+  /* ---------- Config banner ---------- */
+  .banner{
+    margin:14px clamp(16px,4vw,40px) 0;padding:12px 16px;border-radius:10px;
+    font-size:13.5px;display:none;align-items:center;gap:10px;
+  }
+  .banner.warn{display:flex;background:#2a1f0c;border:1px solid #6b4b15;color:#ffcf8f;}
+  .banner.ok{display:flex;background:#0f2418;border:1px solid #1f6b42;color:#9bf0c0;}
+  .banner code{font-family:'Space Mono';background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;}
+
+  /* ---------- Layout ---------- */
+  .wrap{max-width:1080px;margin:0 auto;padding:24px clamp(16px,4vw,40px) 80px;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* ---------- Paper sheet ---------- */
+  .sheet{
+    background:var(--panel);color:var(--ink);border-radius:6px;
+    box-shadow:0 30px 60px rgba(0,0,0,.55), 0 2px 0 var(--amber);
+    overflow:hidden;border:1px solid #d8d2c4;
+  }
+  .sheet-head{
+    background:#101318;color:#fff;padding:22px 26px;display:flex;
+    align-items:flex-end;justify-content:space-between;gap:16px;
+    border-bottom:3px solid var(--amber);
+  }
+  .sheet-head .title{font-family:'Anton';font-size:30px;letter-spacing:.5px;text-transform:uppercase;}
+  .sheet-head .title b{color:var(--amber);}
+  .sheet-head .doc{font-family:'Space Mono';font-size:12px;color:#9aa3b1;text-align:right;line-height:1.7;}
+  .sheet-head .doc .no{color:#fff;font-size:14px;}
+
+  .grid{padding:0;}
+  .row{display:grid;border-bottom:1px solid var(--line);}
+  .row.two{grid-template-columns:1fr 1fr;}
+  .cell{padding:12px 16px;border-right:1px solid var(--line);}
+  .cell:last-child{border-right:none;}
+  .lab{
+    font-family:'Archivo';font-weight:700;font-size:10.5px;letter-spacing:1.5px;
+    text-transform:uppercase;color:var(--ink-soft);display:block;margin-bottom:5px;
+  }
+  input,textarea,select{
+    width:100%;border:none;background:transparent;color:var(--ink);
+    font-family:'Space Mono',monospace;font-size:15px;outline:none;
+  }
+  input::placeholder,textarea::placeholder{color:#b3ac9c;}
+  input:focus,textarea:focus,select:focus{background:#fffbef;}
+  textarea{resize:vertical;min-height:54px;line-height:1.5;}
+  select{cursor:pointer;}
+
+  .contacts{display:grid;grid-template-columns:1fr 1fr;}
+  .contacts .c{border-right:1px solid var(--line);}
+  .contacts .c:last-child{border-right:none;}
+
+  /* ---------- Jobs table ---------- */
+  .jobs-head, .job-row{
+    display:grid;grid-template-columns:1fr 130px 110px 120px 40px;align-items:stretch;
+  }
+  .jobs-head{
+    background:#ece7da;border-bottom:1px solid var(--line);
+  }
+  .jobs-head span{
+    padding:10px 14px;font-family:'Archivo';font-weight:700;font-size:10.5px;
+    letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);
+    border-right:1px solid var(--line);
+  }
+  .jobs-head span:last-child{border-right:none;}
+  .job-row{border-bottom:1px solid var(--line);}
+  .job-row > div{border-right:1px solid var(--line);padding:6px 14px;display:flex;align-items:center;}
+  .job-row > div:last-child{border-right:none;justify-content:center;}
+  .job-row input{font-size:14px;}
+  .num input{text-align:right;}
+  .price-prefix{position:relative;}
+  .del-row{
+    border:none;background:transparent;color:#c0392b;cursor:pointer;font-size:18px;
+    line-height:1;padding:4px 8px;border-radius:6px;
+  }
+  .del-row:hover{background:#f3d6d2;}
+  .add-row{
+    width:100%;border:none;background:#ece7da;color:var(--steel);cursor:pointer;
+    font-family:'Archivo';font-weight:700;font-size:12px;letter-spacing:1px;
+    text-transform:uppercase;padding:11px;border-bottom:1px solid var(--line);
+  }
+  .add-row:hover{background:#e3ddcd;color:var(--amber);}
+
+  /* ---------- Totals ---------- */
+  .totals{display:grid;grid-template-columns:1fr 300px;}
+  .totals .report{border-right:1px solid var(--line);}
+  .tot-line{
+    display:flex;justify-content:space-between;padding:11px 18px;
+    border-bottom:1px solid var(--line);font-family:'Space Mono';font-size:14px;
+  }
+  .tot-line .k{font-family:'Archivo';font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);}
+  .tot-line.grand{background:#101318;color:#fff;border:none;}
+  .tot-line.grand .k{color:var(--amber);}
+  .tot-line.grand .v{font-size:19px;font-weight:700;}
+
+  /* ---------- Actions ---------- */
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
+  .btn{
+    font-family:'Archivo';font-weight:700;font-size:13px;letter-spacing:.6px;
+    text-transform:uppercase;border:none;border-radius:9px;padding:13px 22px;
+    cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn-primary{background:var(--amber);color:#1a1205;}
+  .btn-primary:hover{background:var(--amber-soft);transform:translateY(-1px);}
+  .btn-ghost{background:#1b2029;color:#cfd5df;border:1px solid #2c343f;}
+  .btn-ghost:hover{border-color:var(--amber);color:#fff;}
+  .btn-danger{background:#241112;color:#ff8b7e;border:1px solid #5a2420;}
+  .btn-danger:hover{background:#3a1a18;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+  /* ---------- Saved list ---------- */
+  .search{
+    width:100%;background:var(--bg-2);border:1px solid #2a313c;color:#fff;
+    font-family:'Space Mono';font-size:15px;padding:14px 16px;border-radius:10px;
+    margin-bottom:18px;outline:none;
+  }
+  .search:focus{border-color:var(--amber);}
+  .list{display:grid;gap:12px;}
+  .card{
+    background:var(--bg-2);border:1px solid #232a34;border-left:4px solid var(--amber);
+    border-radius:10px;padding:16px 18px;cursor:pointer;transition:.15s;
+    display:flex;justify-content:space-between;align-items:center;gap:16px;
+  }
+  .card:hover{border-color:#39414e;border-left-color:var(--amber);transform:translateX(2px);background:#1a1f27;}
+  .card .who{font-family:'Archivo';font-weight:700;font-size:17px;color:#fff;}
+  .card .meta{font-family:'Space Mono';font-size:12px;color:#8b93a1;margin-top:4px;}
+  .card .right{text-align:right;}
+  .card .price{font-family:'Space Mono';font-weight:700;font-size:18px;color:var(--amber);}
+  .pill{
+    display:inline-block;font-family:'Archivo';font-weight:700;font-size:10px;
+    letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:20px;margin-top:6px;
+  }
+  .pill.open{background:#2a1f0c;color:#ffcf8f;}
+  .pill.progress{background:#0c2030;color:#8fd3ff;}
+  .pill.done{background:#0f2418;color:#9bf0c0;}
+  .empty{text-align:center;color:#6c7585;padding:60px 20px;font-family:'Space Mono';}
+
+  /* ---------- Toast ---------- */
+  #toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:#1a1f27;color:#fff;border:1px solid #2c343f;border-left:4px solid var(--good);
+    padding:14px 20px;border-radius:10px;font-family:'Archivo';font-weight:600;font-size:14px;
+    opacity:0;pointer-events:none;transition:.25s;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.5);
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #toast.err{border-left-color:var(--bad);}
+
+  @media (max-width:640px){
+    .jobs-head, .job-row{grid-template-columns:1fr 70px 70px 80px 34px;}
+    .jobs-head span, .job-row > div{padding:6px 8px;font-size:9px;}
+    .job-row input{font-size:12.5px;}
+    .totals{grid-template-columns:1fr;}
+    .totals .report{border-right:none;border-bottom:1px solid var(--line);}
+    .row.two{grid-template-columns:1fr;}
+    .row.two .cell{border-right:none;border-bottom:1px solid var(--line);}
+    .row.two .cell:last-child{border-bottom:none;}
+  }
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{background:#fff;}
+    .topbar,.tabs,.banner,.actions,.add-row,.del-row,#savedView,#toast{display:none !important;}
+    .wrap{padding:0;max-width:100%;}
+    .sheet{box-shadow:none;border:1px solid #000;}
+    .sheet-head{background:#fff;color:#000;border-bottom:2px solid #000;}
+    .sheet-head .title b{color:#000;}
+    .tot-line.grand{background:#fff;color:#000;border-top:2px solid #000;}
+    .tot-line.grand .k{color:#000;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="mark">HILLARD<b>·</b>PERFORMANCE</span>
+  </div>
+  <span class="sub">Job Sheet &amp; Booking System</span>
+  <div class="tabs">
+    <button class="tab active" data-view="newView" onclick="switchView('newView',this)">＋ New Sheet</button>
+    <button class="tab" data-view="savedView" onclick="switchView('savedView',this);loadList()">☰ Saved Sheets</button>
+  </div>
+</div>
+
+<div id="banner" class="banner"></div>
+
+<div class="wrap">
+
+  <!-- ===================== NEW / EDIT SHEET ===================== -->
+  <section id="newView" class="view active">
+    <div class="sheet" id="sheet">
+      <div class="sheet-head">
+        <div class="title">HILLARD <b>PERFORMANCE</b> · JOB SHEET</div>
+        <div class="doc">
+          <div class="no" id="docNo">NEW SHEET</div>
+          <div id="docDate"></div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="row two">
+          <div class="cell"><span class="lab">Received</span><input type="date" id="received"></div>
+          <div class="cell"><span class="lab">Required</span><input type="date" id="required"></div>
+        </div>
+
+        <div class="row">
+          <div class="cell"><span class="lab">Customer</span><input id="customer" placeholder="Full name"></div>
+        </div>
+
+        <div class="row">
+          <div class="cell" style="padding:0;">
+            <div class="contacts">
+              <div class="c" style="padding:12px 16px;">
+                <span class="lab">Contact 1 — Name &amp; Phone</span>
+                <input id="c1name" placeholder="Name" style="margin-bottom:4px;">
+                <input id="c1phone" placeholder="07xxx xxxxxx">
+              </div>
+              <div class="c" style="padding:12px 16px;">
+                <span class="lab">Contact 2 — Name &amp; Phone</span>
+                <input id="c2name" placeholder="Name (optional)" style="margin-bottom:4px;">
+                <input id="c2phone" placeholder="07xxx xxxxxx">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row two">
+          <div class="cell"><span class="lab">Reg</span><input id="reg" placeholder="AB12 CDE" style="text-transform:uppercase;"></div>
+          <div class="cell"><span class="lab">Miles</span><input id="miles" placeholder="Mileage"></div>
+        </div>
+
+        <!-- Jobs table -->
+        <div class="jobs-head">
+          <span>Job</span><span>Parts</span><span>Labour</span><span>Price (£)</span><span></span>
+        </div>
+        <div id="jobRows"></div>
+        <button class="add-row" onclick="addJobRow()">＋ Add job line</button>
+
+        <!-- Totals -->
+        <div class="totals">
+          <div class="report" style="padding:12px 16px;">
+            <span class="lab">Tech / Adviser Report</span>
+            <textarea id="report" placeholder="Notes, advisories, work carried out…"></textarea>
+            <div style="margin-top:10px;">
+              <span class="lab">Status</span>
+              <select id="status">
+                <option value="open">Booked / Open</option>
+                <option value="progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <div class="tot-line"><span class="k">Subtotal</span><span class="v" id="subtotal">£0.00</span></div>
+            <div class="tot-line"><span class="k">VAT (<span id="vatPct">20</span>%)</span><span class="v" id="vat">£0.00</span></div>
+            <div class="tot-line grand"><span class="k">Total with VAT</span><span class="v" id="total">£0.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="saveBtn" onclick="saveSheet()">💾 Save Job Sheet</button>
+      <button class="btn btn-ghost" onclick="printSheet()">🖨 Print</button>
+      <button class="btn btn-ghost" onclick="newSheet()">＋ New / Clear</button>
+      <button class="btn btn-danger" id="deleteBtn" style="display:none;" onclick="deleteSheet()">🗑 Delete</button>
+    </div>
+  </section>
+
+  <!-- ===================== SAVED LIST ===================== -->
+  <section id="savedView" class="view">
+    <input class="search" id="search" placeholder="Search by customer, reg or phone…" oninput="renderList()">
+    <div class="list" id="list"></div>
+  </section>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ---------------------------------------------------------------- */
+/*  STATE + SUPABASE                                                 */
+/* ---------------------------------------------------------------- */
+let sb = null;
+let configured = false;
+let currentId = null;          // null = new sheet; otherwise editing
+let sessionCache = [];         // in-memory fallback so the page works before Supabase is set up
+
+function initSupabase(){
+  const ok = SUPABASE_URL && !SUPABASE_URL.includes("YOUR-PROJECT")
+          && SUPABASE_ANON_KEY && !SUPABASE_ANON_KEY.includes("YOUR-ANON");
+  if(ok){
+    try{
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      configured = true;
+      banner("ok","Connected to Supabase. Job sheets are saved to your database.");
+    }catch(e){ configured = false; banner("warn","Supabase failed to start: "+e.message); }
+  }else{
+    configured = false;
+    banner("warn","Supabase not configured yet — edit SUPABASE_URL and SUPABASE_ANON_KEY at the top of this file. Until then, sheets are kept only for this browser session.");
+  }
+}
+function banner(type,msg){
+  const b=document.getElementById('banner');
+  b.className='banner '+type; b.innerHTML=msg;
+}
+
+/* ---------------------------------------------------------------- */
+/*  VIEW SWITCH                                                      */
+/* ---------------------------------------------------------------- */
+function switchView(id, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  window.scrollTo({top:0});
+}
+
+/* ---------------------------------------------------------------- */
+/*  JOB ROWS                                                         */
+/* ---------------------------------------------------------------- */
+function addJobRow(data={}){
+  const wrap=document.getElementById('jobRows');
+  const div=document.createElement('div');
+  div.className='job-row';
+  div.innerHTML=`
+    <div><input class="j-job" placeholder="e.g. Drivers side window motor" value="${esc(data.job)}"></div>
+    <div><input class="j-parts" placeholder="part" value="${esc(data.parts)}"></div>
+    <div><input class="j-labour" placeholder="hrs" value="${esc(data.labour)}"></div>
+    <div class="num"><input class="j-price" type="number" step="0.01" min="0" placeholder="0.00" value="${esc(data.price)}" oninput="recalc()"></div>
+    <div><button class="del-row" title="Remove" onclick="this.closest('.job-row').remove();recalc()">×</button></div>`;
+  wrap.appendChild(div);
+}
+function esc(v){return v===undefined||v===null?'':String(v).replace(/"/g,'&quot;');}
+
+function recalc(){
+  let sub=0;
+  document.querySelectorAll('.j-price').forEach(i=>{const n=parseFloat(i.value);if(!isNaN(n))sub+=n;});
+  const vat=sub*VAT_RATE, tot=sub+vat;
+  document.getElementById('subtotal').textContent=money(sub);
+  document.getElementById('vat').textContent=money(vat);
+  document.getElementById('total').textContent=money(tot);
+  document.getElementById('vatPct').textContent=(VAT_RATE*100).toFixed(0);
+}
+function money(n){return '£'+n.toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+/* ---------------------------------------------------------------- */
+/*  GATHER / FILL FORM                                               */
+/* ---------------------------------------------------------------- */
+function collect(){
+  const jobs=[...document.querySelectorAll('.job-row')].map(r=>({
+    job:r.querySelector('.j-job').value.trim(),
+    parts:r.querySelector('.j-parts').value.trim(),
+    labour:r.querySelector('.j-labour').value.trim(),
+    price:parseFloat(r.querySelector('.j-price').value)||0
+  })).filter(j=>j.job||j.parts||j.labour||j.price);
+
+  let sub=jobs.reduce((a,j)=>a+(j.price||0),0);
+  const vat=sub*VAT_RATE;
+
+  return {
+    received_date: val('received')||null,
+    required_date: val('required')||null,
+    customer: val('customer'),
+    contacts: [
+      {name:val('c1name'),phone:val('c1phone')},
+      {name:val('c2name'),phone:val('c2phone')}
+    ].filter(c=>c.name||c.phone),
+    reg: val('reg').toUpperCase(),
+    miles: val('miles'),
+    jobs: jobs,
+    tech_report: val('report'),
+    status: val('status'),
+    subtotal: round(sub),
+    vat: round(vat),
+    total: round(sub+vat)
+  };
+}
+function fill(d){
+  set('received',d.received_date); set('required',d.required_date);
+  set('customer',d.customer); set('reg',d.reg); set('miles',d.miles);
+  set('report',d.tech_report); set('status',d.status||'open');
+  const c=d.contacts||[];
+  set('c1name',c[0]?.name); set('c1phone',c[0]?.phone);
+  set('c2name',c[1]?.name); set('c2phone',c[1]?.phone);
+  document.getElementById('jobRows').innerHTML='';
+  (d.jobs&&d.jobs.length?d.jobs:[{}]).forEach(addJobRow);
+  recalc();
+}
+const val=id=>document.getElementById(id).value.trim();
+const set=(id,v)=>{document.getElementById(id).value=v??'';};
+const round=n=>Math.round(n*100)/100;
+
+/* ---------------------------------------------------------------- */
+/*  NEW SHEET                                                        */
+/* ---------------------------------------------------------------- */
+function newSheet(){
+  currentId=null;
+  ['received','required','customer','reg','miles','report','c1name','c1phone','c2name','c2phone'].forEach(i=>set(i,''));
+  document.getElementById('status').value='open';
+  document.getElementById('jobRows').innerHTML='';
+  addJobRow();addJobRow();addJobRow();
+  set('received', new Date().toISOString().slice(0,10));
+  document.getElementById('docNo').textContent='NEW SHEET';
+  document.getElementById('docDate').textContent=new Date().toLocaleDateString('en-GB');
+  document.getElementById('deleteBtn').style.display='none';
+  recalc();
+  switchView('newView', document.querySelector('.tab[data-view=newView]'));
+}
+
+/* ---------------------------------------------------------------- */
+/*  SAVE  (insert or update)                                         */
+/* ---------------------------------------------------------------- */
+async function saveSheet(){
+  const data=collect();
+  if(!data.customer){toast('Add a customer name first',true);return;}
+  const btn=document.getElementById('saveBtn');
+  btn.disabled=true;btn.textContent='Saving…';
+
+  try{
+    if(configured){
+      let res;
+      if(currentId){
+        res=await sb.from('job_sheets').update(data).eq('id',currentId).select().single();
+      }else{
+        res=await sb.from('job_sheets').insert(data).select().single();
+      }
+      if(res.error) throw res.error;
+      currentId=res.data.id;
+      stampDoc(res.data);
+    }else{
+      // session fallback
+      if(currentId){
+        const i=sessionCache.findIndex(x=>x.id===currentId);
+        sessionCache[i]={...sessionCache[i],...data};
+      }else{
+        currentId='local-'+Date.now();
+        sessionCache.unshift({id:currentId,created_at:new Date().toISOString(),...data});
+      }
+      stampDoc({id:currentId,created_at:new Date().toISOString()});
+    }
+    document.getElementById('deleteBtn').style.display='inline-flex';
+    toast('Job sheet saved ✓');
+  }catch(e){
+    toast('Save failed: '+(e.message||e),true);
+  }finally{
+    btn.disabled=false;btn.innerHTML='💾 Save Job Sheet';
+  }
+}
+function stampDoc(row){
+  const short=String(row.id).replace('local-','').slice(0,8).toUpperCase();
+  document.getElementById('docNo').textContent='#'+short;
+  document.getElementById('docDate').textContent=new Date(row.created_at).toLocaleDateString('en-GB');
+}
+
+/* ---------------------------------------------------------------- */
+/*  LOAD LIST + OPEN                                                 */
+/* ---------------------------------------------------------------- */
+let listData=[];
+async function loadList(){
+  if(configured){
+    const {data,error}=await sb.from('job_sheets').select('*').order('created_at',{ascending:false});
+    if(error){toast('Load failed: '+error.message,true);listData=[];}
+    else listData=data||[];
+  }else{
+    listData=sessionCache;
+  }
+  renderList();
+}
+function renderList(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const box=document.getElementById('list');
+  const rows=listData.filter(r=>{
+    const hay=[r.customer,r.reg,(r.contacts||[]).map(c=>c.phone).join(' ')].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+  if(!rows.length){box.innerHTML='<div class="empty">No job sheets'+(q?' match your search':' yet — create one!')+'</div>';return;}
+  box.innerHTML=rows.map(r=>`
+    <div class="card" onclick='openSheet(${JSON.stringify(r.id)})'>
+      <div>
+        <div class="who">${escHtml(r.customer||'—')}</div>
+        <div class="meta">${escHtml(r.reg||'no reg')} · ${(r.jobs||[]).length} job(s) · ${new Date(r.created_at).toLocaleDateString('en-GB')}</div>
+        <span class="pill ${r.status||'open'}">${({open:'Booked',progress:'In Progress',done:'Done'})[r.status||'open']}</span>
+      </div>
+      <div class="right"><div class="price">${money(r.total||0)}</div></div>
+    </div>`).join('');
+}
+async function openSheet(id){
+  let row=listData.find(r=>r.id===id);
+  if(!row && configured){
+    const {data}=await sb.from('job_sheets').select('*').eq('id',id).single();
+    row=data;
+  }
+  if(!row){toast('Could not open sheet',true);return;}
+  currentId=row.id;
+  fill(row);
+  stampDoc(row);
+  document.getElementById('deleteBtn').style.display='inline-flex';
+  switchView('newView', document.querySelector('.tab[data-view=newView]'));
+}
+
+/* ---------------------------------------------------------------- */
+/*  DELETE                                                           */
+/* ---------------------------------------------------------------- */
+async function deleteSheet(){
+  if(!currentId)return;
+  if(!confirm('Delete this job sheet permanently?'))return;
+  try{
+    if(configured){
+      const {error}=await sb.from('job_sheets').delete().eq('id',currentId);
+      if(error)throw error;
+    }else{
+      sessionCache=sessionCache.filter(x=>x.id!==currentId);
+    }
+    toast('Deleted');
+    newSheet();
+  }catch(e){toast('Delete failed: '+e.message,true);}
+}
+
+/* ---------------------------------------------------------------- */
+/*  PRINT + TOAST                                                    */
+/* ---------------------------------------------------------------- */
+function printSheet(){window.print();}
+let toastT;
+function toast(msg,err){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='show'+(err?' err':'');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.className='',2600);
+}
+
+/* ---------------------------------------------------------------- */
+/*  BOOT                                                             */
+/* ---------------------------------------------------------------- */
+const escHtml=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+window.addEventListener('DOMContentLoaded',()=>{
+  initSupabase();
+  newSheet();
+});
+</script>
+</body>
+</html>
