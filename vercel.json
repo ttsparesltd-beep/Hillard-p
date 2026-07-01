@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/job-sheets", "destination": "/hillard-jobsheet.html" },
+    { "source": "/support", "destination": "/support.html" },
+    { "source": "/privacy", "destination": "/privacy.html" }
+  ]
+}
