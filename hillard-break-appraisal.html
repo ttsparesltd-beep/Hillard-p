@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Break Appraisal · Hillard Performance</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0b;--surface:#111114;--surface2:#18181d;--border:#2a2a32;--red:#e8291c;--red-dim:rgba(232,41,28,0.1);--amber:#f59e0b;--green:#22c55e;--text:#f0f0f4;--text2:#b0b0be;--muted:#6b6b7a;--plate:#ffd400;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.45;padding-bottom:40px;}
+button{font-family:inherit;cursor:pointer;}
+input,select{font-family:inherit;font-size:14px;}
+h1,h2,h3,.rj{font-family:'Rajdhani',sans-serif;}
+.mono{font-family:'DM Mono',monospace;font-variant-numeric:tabular-nums;}
+
+/* NAV */
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20;}
+.topnav .wordmark{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.14em;font-size:18px;color:var(--text);text-transform:uppercase;}
+.topnav .wordmark span{color:var(--red);}
+.topnav .tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;}
+.hactions{display:flex;gap:8px;}
+.hbtn{background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:8px 12px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:12px;}
+.hbtn.primary{background:var(--red);border-color:var(--red);color:#fff;}
+.hbtn:hover{filter:brightness(1.1);}
+
+.wrap{max-width:1160px;margin:0 auto;padding:18px;}
+
+/* LIST */
+.listgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.apcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:transform .08s,border-color .1s;}
+.apcard:hover{transform:translateY(-2px);border-color:#3a3a44;}
+.apcard h3{font-size:16px;font-weight:700;margin:8px 0 2px;letter-spacing:.02em;}
+.apcard .meta{color:var(--muted);font-size:12px;}
+.apcard .row2{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+.pl{display:inline-flex;background:var(--plate);color:#0a0a0a;border-radius:5px;padding:3px 9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.06em;font-size:15px;}
+.chip{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.08em;padding:3px 10px;border-radius:20px;font-size:12px;text-transform:uppercase;}
+.chip.go{background:rgba(34,197,94,.16);color:var(--green);}
+.chip.warn{background:rgba(245,158,11,.16);color:var(--amber);}
+.chip.stop{background:rgba(232,41,28,.16);color:var(--red);}
+.empty{text-align:center;color:var(--muted);padding:70px 20px;}
+.empty h2{color:var(--text);font-size:22px;letter-spacing:.04em;margin-bottom:6px;}
+
+/* EDITOR */
+.editor{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start;}
+@media(max-width:900px){.editor{grid-template-columns:1fr;}}
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;}
+.sec>h2{margin:0;padding:12px 16px;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--text2);background:var(--surface2);border-bottom:1px solid var(--border);font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.sec>h2 .sub{color:var(--muted);letter-spacing:.02em;font-family:'DM Mono',monospace;font-size:12px;text-transform:none;font-weight:400;}
+.sec .body{padding:16px;}
+
+.platewrap{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+.plate-input{display:inline-flex;background:var(--plate);border-radius:8px;padding:6px 12px;}
+.plate-input input{background:transparent;border:0;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:26px;letter-spacing:.06em;color:#0a0a0a;width:165px;text-transform:uppercase;outline:none;}
+.plate-input input::placeholder{color:rgba(0,0,0,.4);}
+.lookup{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:0 14px;height:44px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;}
+.lookup:hover{border-color:var(--red);color:var(--red);}
+.lookmsg{font-size:12px;color:var(--muted);}
+
+.fields{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+@media(max-width:700px){.fields{grid-template-columns:repeat(2,1fr);}}
+.f{display:flex;flex-direction:column;gap:4px;}.f.col2{grid-column:span 2;}
+.f label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600;font-family:'Rajdhani',sans-serif;}
+.f input,.f select{padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);}
+.f input:focus,.f select:focus{outline:none;border-color:var(--red);}
+.f select option{background:var(--surface2);}
+
+/* photos */
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;}
+.thumb{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--surface2);}
+.thumb img{width:100%;height:100%;object-fit:cover;}
+.thumb button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.7);color:#fff;font-size:13px;}
+.addphoto{aspect-ratio:4/3;border:2px dashed var(--border);border-radius:8px;background:var(--surface2);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-weight:700;font-family:'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-size:12px;}
+.addphoto:hover{border-color:var(--red);color:var(--red);}
+
+/* parts */
+.grp{border-top:1px solid var(--border);}.grp:first-child{border-top:0;}
+.grphead{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;user-select:none;background:var(--surface2);}
+.grphead .caret{color:var(--muted);transition:transform .12s;}.grphead.collapsed .caret{transform:rotate(-90deg);}
+.grphead .gname{flex:1;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:13px;}
+.grphead .gsub{font-family:'DM Mono',monospace;font-variant-numeric:tabular-nums;color:var(--text2);font-weight:500;}
+.rows{padding:4px 8px 10px;}
+.prow{display:grid;grid-template-columns:24px 1fr 96px 118px 78px;gap:8px;align-items:center;padding:5px 8px;}
+@media(max-width:640px){.prow{grid-template-columns:22px 1fr 74px;}}
+.prow input[type=checkbox]{accent-color:var(--red);width:16px;height:16px;}
+.prow .pname{border:0;border-bottom:1px solid transparent;background:transparent;color:var(--text);padding:4px 2px;}
+.prow .pname:focus{outline:none;border-bottom-color:var(--red);}
+.prow .val{position:relative;}
+.prow .val input{width:100%;text-align:right;border:1px solid var(--border);border-radius:6px;padding:6px 8px 6px 18px;background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;}
+.prow .val:before{content:"£";position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;}
+.prow select{border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--bg);color:var(--text);}
+.prow .lt{text-align:right;font-family:'DM Mono',monospace;font-variant-numeric:tabular-nums;font-weight:500;}
+.prow.off{opacity:.4;}.prow.off .lt{text-decoration:line-through;}
+.addrow{margin:4px 8px 0;background:none;border:1px dashed var(--border);border-radius:6px;color:var(--muted);padding:7px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px;width:calc(100% - 16px);}
+.addrow:hover{border-color:var(--red);color:var(--red);}
+
+/* verdict */
+.side{position:sticky;top:74px;}
+.verdict{border-radius:14px;padding:18px;color:#fff;}
+.verdict.go{background:linear-gradient(160deg,#1c8f4e,#13703c);}
+.verdict.warn{background:linear-gradient(160deg,#c07d0b,#9a6408);}
+.verdict.stop{background:linear-gradient(160deg,#c9271b,#9c1d13);}
+.verdict .tag{font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:.2em;text-transform:uppercase;opacity:.9;font-weight:700;}
+.verdict .big{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;letter-spacing:.04em;margin-top:2px;}
+.verdict .maxbuy{margin-top:14px;background:rgba(255,255,255,.16);border-radius:10px;padding:12px 14px;}
+.verdict .maxbuy .lab{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.9;font-weight:600;font-family:'Rajdhani',sans-serif;}
+.verdict .maxbuy .amt{font-family:'DM Mono',monospace;font-size:30px;font-weight:500;}
+.verdict .note{font-size:12px;margin-top:8px;opacity:.95;line-height:1.4;}
+.breakdown{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-top:14px;padding:14px 16px;}
+.breakdown .ln{display:flex;justify-content:space-between;padding:5px 0;font-family:'DM Mono',monospace;font-variant-numeric:tabular-nums;border-bottom:1px dashed var(--border);font-size:13px;}
+.breakdown .ln:last-child{border-bottom:0;}
+.breakdown .ln span:first-child{font-family:'DM Sans',sans-serif;color:var(--text2);}
+.breakdown .ln.total{border-top:2px solid var(--border);margin-top:4px;padding-top:8px;border-bottom:0;font-weight:500;}
+.sidebtns{display:grid;gap:8px;margin-top:14px;}
+.sidebtns button{padding:11px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;}
+.sidebtns .save{background:var(--red);border-color:var(--red);color:#fff;}
+.sidebtns .del{color:var(--red);}
+.flash{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#04210f;padding:10px 20px;border-radius:24px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:40;}
+.flash.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+.gate{display:flex;align-items:center;justify-content:center;height:70vh;color:var(--muted);font-family:'Rajdhani',sans-serif;letter-spacing:.1em;text-transform:uppercase;}
+</style>
+</head>
+<body>
+  <nav class="topnav">
+    <div>
+      <div class="wordmark">HILLARD<span>·</span>PERFORMANCE</div>
+      <div class="tag">Break Appraisal</div>
+    </div>
+    <div class="hactions">
+      <button class="hbtn" id="btnList">Saved</button>
+      <button class="hbtn primary" id="btnNew">+ New</button>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <div id="gate" class="gate">Checking access…</div>
+    <div id="listView" style="display:none"></div>
+    <div id="editView" style="display:none"></div>
+  </div>
+  <div class="flash" id="flash">Saved</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ---- Supabase (same project/key as the rest of the portal) ---- */
+const SB_URL = 'https://ixgotsabbqkkxzsxnwtr.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4Z290c2FiYnFra3h6c3hud3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTQwOTEsImV4cCI6MjA4Nzg3MDA5MX0.NNH_JEmEEvaMYuM_2F9F4qLqOFXoKb68NM-Ac3PDXyA';
+const sbClient = window.supabase.createClient(SB_URL, SB_ANON);
+const BUCKET = 'appraisal-photos';
+const $ = s => document.querySelector(s);
+
+/* ---- auth guard: match the other pages ---- */
+(async function guard(){
+  const { data:{ session } } = await sbClient.auth.getSession();
+  if(!session){ window.location.href = '/login.html'; return; }
+  $('#gate').style.display='none';
+  renderList();
+})();
+
+/* ================= config ================= */
+const DEFAULTS = { feePct:15, labourRate:35, stripHours:12, transport:150, storage:50, scrap:150, target:2.5 };
+const COND = {A:1.0,B:0.75,C:0.5,D:0.25};
+const CONDLABEL = {A:"A · mint",B:"B · good",C:"C · usable",D:"D · spares"};
+const ENGINE_OPTS = ["180hp 1.8T","225hp 1.8T","3.2 V6"];
+
+const TEMPLATE = [
+  ["Big-ticket units — verify present, toggle per car",[
+    ["Engine 1.8T complete",450],["Engine 3.2 V6 complete",1000],
+    ["Gearbox 6-spd manual (02M)",80],["Gearbox 3.2 V6 DSG (02E)",400],
+    ["DSG mechatronic (DQ250)",120],["Full leather/heated interior set",150],
+    ["Alloy wheels + tyres, RS4/9-spoke set",350],
+  ]],
+  ["Drivetrain & engine",[
+    ["Power steering rack 1.8T (8N2422855AD)",140],["PAS return oil cooling pipe (8N0422885A)",74],
+    ["Gearshift/short shifter lever (8N0711112B)",70],["K04 exhaust manifold (06A253033AJ)",70],
+    ["Clutch pedal (8N2721059E)",37],["Haldex rear diff filter+oil kit",40],
+    ["Haldex service kit (02D525558A)",34],["Rocker cover 1.8T 20V (06A103469S)",33],
+    ["Engine mount bracket O/S (038199207H)",28],["Power steering pump (8N0145154A)",27],
+    ["Inlet manifold cover trim (06A119518L)",27],["Diverter valve (06A145710N)",26],
+    ["Engine cover trim BAM (06A103724)",26],["Injectors x4 BAM (06A906031BC)",25],
+    ["Turbo oil return pipe (06A145735J)",21],["Twin rad cooling fans (8N0121205A)",29],
+  ]],
+  ["Suspension & brakes",[
+    ["Front lower arms/wishbones (8N0407165)",40],["Rear trailing arms set",79],
+    ["Front brake calipers 312mm",63],["Rear subframe cradle (1J0505235F)",47],
+    ["Front hub & bearing, nut type",43],["Front shock absorbers pair (8N0413031K)",34],
+    ["Rear lateral control arms set",31],["Brake master cylinder + tank (0204221731)",17],
+  ]],
+  ["Wheels & tyres",[
+    ["RS4 9-spoke alloys + tyres set (8N0601025S)",317],["Wheel centre caps x4 (8D0601165K)",52],
+    ["Spare wheel / space saver",59],
+  ]],
+  ["Electronics & sensors",[
+    ["Airbag control ECU (8N8909601)",127],["Instrument cluster w/ code (8N2920980A)",105],
+    ["BAM ECU, immo off (8N0906018H)",105],["Electric fuel pump (8L9919051J)",57],
+    ["ABS pump controller ECU (8N0614517A)",42],["Hazard warning switch (8N0941509A)",45],
+    ["Wiper motor linkage assy (8N0955113)",83],["Xenon headlight level sensor (4B0907503)",32],
+    ["Wing mirror switch (8N2959551B)",28],["Convenience module CCM (8N8962267E)",40],
+    ["Drivers master window switch (8N0959855A)",23],["Bose amplifier (8N8035223A)",19],
+    ["Xenon headlight control switch (8N2941531A)",18],["Window motor (8N8959801B)",34],
+    ["Heated seat switch button (8N0963563B)",24],
+  ]],
+  ["Interior",[
+    ["Front seats, leather/heated pair",150],["Parcel shelf, coupe",55],
+    ["Roof — convertible hood",300],["Roadster roof pump & rams (8N7871611A)",60],
+    ["Roof switches (8N7919719D)",50],["Door card, BOSE (8N2867106)",38],
+    ["Dash air vents set of 4 (8N0820901)",31],["Gear stick gaiter (8N0711115A)",29],
+    ["Centre console grab handle/knee bars",26],["Seat belt buckles, rear pair",17],
+    ["Rear centre console trim (8N0863274)",16],["Heater/climate control panel (8N0820043A)",16],
+    ["Leather steering wheel (8N0419091B)",16],["Interior door handle trim caps pair (8N0867163)",13],
+    ["Gear knob surround alloy (8N0864281)",10],
+  ]],
+  ["Exterior & body",[
+    ["Front wing, coloured",90],["Rear lights pair, late clear",87],
+    ["Tailgate lower trim (8N8867979)",80],["Headlight washer jet (8N0955102)",38],
+    ["Scuttle insert trim (8N2819415B)",36],["Front bumper centre lower grille (8N0807683A)",31],
+    ["Battery cover trim (8N0103927B)",30],["Battery top fuse box (8N0937550A)",29],
+    ["Undertray fuel tank cover (8N0825214C)",28],["Front wiper arms pair",24],
+    ["Washer bottle twin pump (8N0955453A)",20],["Fuel flap boot release switches (8N0962101)",20],
+    ["Door lock/latch mechanism, front",20],["Chrome fuel filler flap (8N0809905C)",16],
+    ["Number plate lights pair (8N0943021A)",15],
+  ]],
+];
+
+/* ================= helpers ================= */
+const gbp = n => "£"+Math.round(n||0).toLocaleString("en-GB");
+const num = v => { const n=parseFloat(v); return isNaN(n)?0:n; };
+const esc = v => (v==null?"":String(v)).replace(/"/g,"&quot;");
+const lineTotal = it => it.on ? num(it.val)*COND[it.cond] : 0;
+
+function buildParts(){
+  return TEMPLATE.map(([group,items])=>({group,collapsed:false,items:items.map(([name,val])=>({name,val,cond:"A",on:true}))}));
+}
+function findItem(ap,prefix){ for(const g of ap.parts) for(const it of g.items) if(it.name.startsWith(prefix)) return it; return null; }
+function applyEngine(ap){
+  const is32=ap.engine==="3.2 V6";
+  const e18=findItem(ap,"Engine 1.8T complete"), e32=findItem(ap,"Engine 3.2 V6 complete");
+  if(e18){ e18.on=!is32; if(!is32) e18.val=(ap.engine==="180hp 1.8T"?300:450); }
+  if(e32) e32.on=is32;
+  const man=findItem(ap,"Gearbox 6-spd manual"), dsg=findItem(ap,"Gearbox 3.2 V6 DSG"), mech=findItem(ap,"DSG mechatronic");
+  if(man) man.on=!is32; if(dsg) dsg.on=is32; if(mech) mech.on=is32;
+}
+function applyBody(ap){
+  const road=ap.body==="Roadster";
+  const ccm=findItem(ap,"Convenience module CCM"); if(ccm){ ccm.on=true; ccm.val=road?300:40; }
+  const roof=findItem(ap,"Roof — convertible hood"), rams=findItem(ap,"Roadster roof pump & rams"), sw=findItem(ap,"Roof switches");
+  if(roof) roof.on=road; if(rams) rams.on=road; if(sw) sw.on=road;
+}
+function freshAppraisal(){
+  const ap={ id:null, reg:"", vin:"", make:"", model:"", variant:"", engine:"225hp 1.8T", body:"Coupe",
+    year:"", mileage:"", colour:"", trans:"", drive:"", runner:"", damage:"", mot:"", asking:"", purchase:"",
+    photos:[], parts:buildParts(), a:{...DEFAULTS} };
+  applyEngine(ap); applyBody(ap); return ap;
+}
+function calc(ap){
+  let gpv=0; ap.parts.forEach(g=>{ g._sub=0; g.items.forEach(it=>{ it._line=lineTotal(it); g._sub+=it._line; }); gpv+=g._sub; });
+  const a=ap.a;
+  const fees=gpv*(num(a.feePct)/100), labour=num(a.stripHours)*num(a.labourRate);
+  const costs=labour+num(a.transport)+num(a.storage), scrap=num(a.scrap);
+  const net=gpv-fees-costs+scrap;
+  const purchase=num(ap.purchase||ap.asking);
+  const margin=net-purchase;
+  const ratio=purchase>0?net/purchase:(net>0?Infinity:0);
+  const maxBuy=Math.max(0,net/num(a.target));
+  const roi=(purchase+costs)>0?(margin/(purchase+costs))*100:0;
+  let verdict,cls,note;
+  if(purchase<=0){ verdict="ENTER PRICE"; cls="warn"; note="Add the purchase price to get a verdict."; }
+  else if(ratio>=num(a.target)){ verdict="BUY"; cls="go"; note="Recovers "+ratio.toFixed(1)+"× the buy price — above your "+a.target+"× target."; }
+  else if(ratio>=num(a.target)*0.8){ verdict="NEGOTIATE"; cls="warn"; note="Close. Get them to "+gbp(maxBuy)+" or below to hit target."; }
+  else { verdict="WALK"; cls="stop"; note="Only "+ratio.toFixed(1)+"× at this price. Max you should pay is "+gbp(maxBuy)+"."; }
+  return {gpv,fees,labour,costs,scrap,net,purchase,margin,ratio,maxBuy,roi,verdict,cls,note};
+}
+
+/* ============ row <-> appraisal ============ */
+function rowToAp(r){
+  const base=freshAppraisal();
+  return { ...base, id:r.id, reg:r.reg||"", vin:r.vin||"", make:r.make||"", model:r.model||"", variant:r.variant||"",
+    engine:r.engine||"225hp 1.8T", body:r.body||"Coupe", year:r.year||"", mileage:r.mileage||"", colour:r.colour||"",
+    trans:r.trans||"", drive:r.drive||"", runner:r.runner||"", damage:r.damage||"", mot:r.mot||"",
+    asking:r.asking!=null?String(r.asking):"", purchase:r.purchase!=null?String(r.purchase):"",
+    parts:r.parts||base.parts, a:r.assumptions||base.a, photos:r.photos||[] };
+}
+function apToRow(ap,r){
+  return { ...(ap.id?{id:ap.id}:{}), reg:ap.reg, vin:ap.vin, make:ap.make, model:ap.model, variant:ap.variant,
+    engine:ap.engine, body:ap.body, year:ap.year, mileage:ap.mileage, colour:ap.colour, trans:ap.trans, drive:ap.drive,
+    runner:ap.runner, damage:ap.damage, mot:ap.mot, asking:num(ap.asking), purchase:num(ap.purchase),
+    parts:ap.parts, assumptions:ap.a, photos:ap.photos,
+    gross:r.gpv, net_recoverable:r.net, max_buy:r.maxBuy, margin:r.margin, verdict:r.verdict, status:"open" };
+}
+
+/* ================= Supabase store ================= */
+const Store = {
+  async list(){ const {data}=await sbClient.from('break_appraisals').select('*').order('created_at',{ascending:false}); return data||[]; },
+  async get(id){ const {data}=await sbClient.from('break_appraisals').select('*').eq('id',id).single(); return data?rowToAp(data):null; },
+  async save(ap){
+    const r=calc(ap); const row=apToRow(ap,r);
+    let res = ap.id ? await sbClient.from('break_appraisals').update(row).eq('id',ap.id).select().single()
+                    : await sbClient.from('break_appraisals').insert(row).select().single();
+    if(res.error){ alert("Save failed: "+res.error.message); return false; }
+    if(res.data&&res.data.id) ap.id=res.data.id;
+    return true;
+  },
+  async del(id){ await sbClient.from('break_appraisals').delete().eq('id',id); }
+};
+
+/* ================= state / routing ================= */
+let current=null;
+const listView=$('#listView'), editView=$('#editView');
+$('#btnNew').onclick=()=>{ current=freshAppraisal(); renderEditor(); };
+$('#btnList').onclick=()=>renderList();
+function flash(m){ const f=$('#flash'); f.textContent=m||"Saved"; f.classList.add('show'); setTimeout(()=>f.classList.remove('show'),1400); }
+
+/* ================= list ================= */
+async function renderList(){
+  editView.style.display='none'; listView.style.display='block';
+  const rows=await Store.list();
+  if(!rows.length){
+    listView.innerHTML=`<div class="empty"><h2>No appraisals yet</h2><p>Log the plate, tick what's on the car, get a max-buy price before you commit.</p>
+      <button class="hbtn primary" style="margin-top:16px" onclick="document.querySelector('#btnNew').click()">+ Appraise a car</button></div>`;
+    return;
+  }
+  listView.innerHTML=`<div class="listgrid">`+rows.map(r=>{
+    const rf=calc(rowToAp(r));
+    return `<div class="apcard" onclick="openAppraisal('${r.id}')">
+      <div class="pl">${(r.reg||"— — —").toUpperCase()}</div>
+      <h3>${(r.make||"Unknown")+" "+(r.model||"")}</h3>
+      <div class="meta">${[r.engine,r.body,r.year].filter(Boolean).join(" · ")||"No details"}</div>
+      <div class="row2"><span class="chip ${rf.cls}">${rf.verdict}</span><span class="mono" style="font-weight:500">Max ${gbp(rf.maxBuy)}</span></div>
+    </div>`;
+  }).join("")+`</div>`;
+}
+window.openAppraisal=async id=>{ current=await Store.get(id); if(current) renderEditor(); };
+
+/* ================= editor ================= */
+function sel(id,val,opts){ return `<select id="${id}"><option value="">—</option>`+opts.map(o=>`<option ${o===val?"selected":""}>${o}</option>`).join("")+`</select>`; }
+
+function renderEditor(){
+  listView.style.display='none'; editView.style.display='block';
+  const ap=current;
+  editView.innerHTML=`
+  <div class="editor">
+    <div class="main">
+      <div class="sec"><h2>Vehicle</h2><div class="body">
+        <div class="platewrap">
+          <div class="plate-input"><input id="f_reg" maxlength="9" placeholder="AB12 CDE" value="${esc(ap.reg)}"></div>
+          <button class="lookup" id="btnLookup">Look up plate</button>
+          <span class="lookmsg" id="lookmsg"></span>
+        </div>
+        <div class="fields">
+          <div class="f col2"><label>VIN</label><input id="f_vin" maxlength="17" placeholder="WVWZZZ..." value="${esc(ap.vin)}"></div>
+          <div class="f"><label>Make</label><input id="f_make" value="${esc(ap.make)}"></div>
+          <div class="f"><label>Model</label><input id="f_model" value="${esc(ap.model)}"></div>
+          <div class="f"><label>Engine</label>${sel("f_engine",ap.engine,ENGINE_OPTS)}</div>
+          <div class="f"><label>Body</label>${sel("f_body",ap.body,["Coupe","Roadster"])}</div>
+          <div class="f"><label>Variant / code</label><input id="f_variant" placeholder="BAM / CJXH" value="${esc(ap.variant)}"></div>
+          <div class="f"><label>Year</label><input id="f_year" value="${esc(ap.year)}"></div>
+          <div class="f"><label>Mileage</label><input id="f_mileage" value="${esc(ap.mileage)}"></div>
+          <div class="f"><label>Colour</label><input id="f_colour" value="${esc(ap.colour)}"></div>
+          <div class="f"><label>Transmission</label>${sel("f_trans",ap.trans,["Manual","DSG / auto"])}</div>
+          <div class="f"><label>Drivetrain</label>${sel("f_drive",ap.drive,["FWD","AWD / Quattro"])}</div>
+          <div class="f"><label>Runner?</label>${sel("f_runner",ap.runner,["Starts & drives","Starts, no drive","Non-runner"])}</div>
+          <div class="f"><label>Damage</label>${sel("f_damage",ap.damage,["None","Cat N","Cat S","Cat B","Mechanical"])}</div>
+          <div class="f"><label>MOT expiry</label><input id="f_mot" value="${esc(ap.mot)}"></div>
+          <div class="f"><label>Asking price</label><input id="f_asking" placeholder="£" value="${esc(ap.asking)}"></div>
+        </div>
+      </div></div>
+
+      <div class="sec"><h2>Photos <span class="sub" id="photoCount">${ap.photos.length}/12</span></h2>
+        <div class="body"><div class="photos" id="photoGrid"></div></div></div>
+
+      <div class="sec"><h2>Parts yield <span class="sub" id="gpvHead"></span></h2><div id="partsWrap"></div></div>
+
+      <div class="sec"><h2>Costs &amp; assumptions</h2><div class="body"><div class="fields">
+        <div class="f"><label>Purchase price</label><input id="a_purchase" placeholder="£" value="${esc(ap.purchase)}"></div>
+        <div class="f"><label>Transport / recovery</label><input id="a_transport" value="${esc(ap.a.transport)}"></div>
+        <div class="f"><label>Strip hours</label><input id="a_stripHours" value="${esc(ap.a.stripHours)}"></div>
+        <div class="f"><label>Labour £/hr</label><input id="a_labourRate" value="${esc(ap.a.labourRate)}"></div>
+        <div class="f"><label>Storage / holding</label><input id="a_storage" value="${esc(ap.a.storage)}"></div>
+        <div class="f"><label>Scrap recovered</label><input id="a_scrap" value="${esc(ap.a.scrap)}"></div>
+        <div class="f"><label>Selling fees %</label><input id="a_feePct" value="${esc(ap.a.feePct)}"></div>
+        <div class="f"><label>Target return ×</label><input id="a_target" value="${esc(ap.a.target)}"></div>
+      </div></div></div>
+    </div>
+
+    <div class="side">
+      <div id="verdict" class="verdict"></div>
+      <div class="breakdown" id="breakdown"></div>
+      <div class="sidebtns">
+        <button class="save" id="btnSave">Save appraisal</button>
+        <button id="btnPrint">Print / PDF</button>
+        <button class="del" id="btnDel">Delete</button>
+      </div>
+    </div>
+  </div>`;
+
+  bind("f_reg","reg",true); bind("f_vin","vin",true); bind("f_make","make"); bind("f_model","model");
+  bind("f_variant","variant"); bind("f_year","year"); bind("f_mileage","mileage"); bind("f_colour","colour");
+  bind("f_trans","trans"); bind("f_drive","drive"); bind("f_runner","runner"); bind("f_damage","damage");
+  bind("f_mot","mot"); bind("f_asking","asking");
+  $("#f_engine").onchange=e=>{ current.engine=e.target.value; applyEngine(current); renderParts(); recompute(); };
+  $("#f_body").onchange=e=>{ current.body=e.target.value; applyBody(current); renderParts(); recompute(); };
+  bindA("a_purchase","purchase");
+  ["transport","stripHours","labourRate","storage","scrap","feePct","target"].forEach(k=>bindA("a_"+k,k,true));
+
+  renderParts(); renderPhotos(); recompute();
+
+  $("#btnLookup").onclick=lookupReg;
+  $("#btnSave").onclick=async()=>{ if(await Store.save(current)) flash("Saved "+(current.reg||"appraisal").toUpperCase()); };
+  $("#btnPrint").onclick=()=>window.print();
+  $("#btnDel").onclick=async()=>{ if(current.id){ if(confirm("Delete this appraisal?")){ await Store.del(current.id); renderList(); } } else renderList(); };
+}
+function bind(id,key,upper){ const el=$("#"+id); if(!el)return; el.oninput=()=>{ current[key]=upper?el.value.toUpperCase():el.value; if(upper)el.value=current[key]; recompute(); }; }
+function bindA(id,key,inA){ const el=$("#"+id); if(!el)return; el.oninput=()=>{ if(inA)current.a[key]=el.value; else current[key]=el.value; recompute(); }; }
+
+/* ---- DVLA / MOT reg lookup (reuses the portal's vehicle-lookup function) ---- */
+async function lookupReg(){
+  const reg=(current.reg||"").trim(); const msg=$("#lookmsg");
+  if(!reg){ msg.textContent="Enter a plate first"; return; }
+  msg.textContent="Looking up…";
+  try{
+    const res=await fetch(SB_URL+'/functions/v1/vehicle-lookup',{ method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_ANON},
+      body:JSON.stringify({ vrm:reg }) });
+    const data=await res.json();
+    const mot=data?.Results?.MotHistoryDetails;
+    if(!mot){ msg.textContent="No match — enter details manually"; return; }
+    if(mot.Make){ current.make=mot.Make; $("#f_make").value=mot.Make; }
+    if(mot.Model){ current.model=mot.Model; $("#f_model").value=mot.Model; }
+    if(mot.Colour){ current.colour=mot.Colour; $("#f_colour").value=mot.Colour; }
+    if(mot.FirstUsedDate){ current.year=mot.FirstUsedDate.substring(0,4); $("#f_year").value=current.year; }
+    if(mot.MotDueDate){ current.mot=mot.MotDueDate.substring(0,10); $("#f_mot").value=current.mot; }
+    // sensible engine guess from model text
+    const t=((mot.Model||"")+" "+(mot.Make||"")).toLowerCase();
+    if(t.includes("3.2")||t.includes("v6")){ current.engine="3.2 V6"; $("#f_engine").value="3.2 V6"; applyEngine(current); renderParts(); }
+    msg.textContent="Filled from DVLA ✓";
+    recompute();
+  }catch(e){ msg.textContent="Lookup unavailable"; }
+}
+
+/* ---- parts ---- */
+function renderParts(){
+  const wrap=$("#partsWrap");
+  wrap.innerHTML=current.parts.map((g,gi)=>`
+    <div class="grp">
+      <div class="grphead ${g.collapsed?'collapsed':''}" data-g="${gi}">
+        <span class="caret">▾</span><span class="gname">${g.group}</span><span class="gsub" id="gsub_${gi}"></span>
+      </div>
+      <div class="rows" id="rows_${gi}" style="${g.collapsed?'display:none':''}">
+        ${g.items.map((it,ii)=>`
+          <div class="prow ${it.on?'':'off'}" data-r="${gi}_${ii}">
+            <input type="checkbox" ${it.on?'checked':''} data-on="${gi}_${ii}">
+            <input type="text" class="pname" value="${esc(it.name)}" data-name="${gi}_${ii}">
+            <span class="val"><input value="${esc(it.val)}" data-val="${gi}_${ii}"></span>
+            <select data-cond="${gi}_${ii}">${Object.keys(COND).map(c=>`<option value="${c}" ${c===it.cond?'selected':''}>${CONDLABEL[c]}</option>`).join("")}</select>
+            <span class="lt" id="lt_${gi}_${ii}"></span>
+          </div>`).join("")}
+        <button class="addrow" data-add="${gi}">+ Add part</button>
+      </div>
+    </div>`).join("");
+  wrap.querySelectorAll(".grphead").forEach(h=>h.onclick=()=>{ const gi=+h.dataset.g; current.parts[gi].collapsed=!current.parts[gi].collapsed; $("#rows_"+gi).style.display=current.parts[gi].collapsed?"none":""; h.classList.toggle("collapsed"); });
+  wrap.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{ current.parts[+b.dataset.add].items.push({name:"",val:0,cond:"B",on:true}); renderParts(); recompute(); });
+  wrap.querySelectorAll("[data-on]").forEach(el=>el.onchange=()=>{ const[g,i]=el.dataset.on.split("_").map(Number); current.parts[g].items[i].on=el.checked; $(`[data-r="${g}_${i}"]`).classList.toggle("off",!el.checked); recompute(); });
+  wrap.querySelectorAll("[data-name]").forEach(el=>el.oninput=()=>{ const[g,i]=el.dataset.name.split("_").map(Number); current.parts[g].items[i].name=el.value; });
+  wrap.querySelectorAll("[data-val]").forEach(el=>el.oninput=()=>{ const[g,i]=el.dataset.val.split("_").map(Number); current.parts[g].items[i].val=el.value; recompute(); });
+  wrap.querySelectorAll("[data-cond]").forEach(el=>el.onchange=()=>{ const[g,i]=el.dataset.cond.split("_").map(Number); current.parts[g].items[i].cond=el.value; recompute(); });
+}
+
+/* ---- photos (Supabase storage) ---- */
+function renderPhotos(){
+  const grid=$("#photoGrid"); if(!grid)return;
+  grid.innerHTML=current.photos.map((src,i)=>`<div class="thumb"><img src="${src}"><button data-rm="${i}">✕</button></div>`).join("")
+    +(current.photos.length<12?`<label class="addphoto">+ Add<input type="file" accept="image/*" multiple hidden id="photoInput"></label>`:"");
+  $("#photoCount").textContent=current.photos.length+"/12";
+  grid.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{ current.photos.splice(+b.dataset.rm,1); renderPhotos(); });
+  const input=$("#photoInput");
+  if(input) input.onchange=async e=>{
+    for(const file of [...e.target.files]){
+      if(current.photos.length>=12) break;
+      try{
+        const blob=await shrink(file);
+        const path=(current.id||"draft")+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+".jpg";
+        const up=await sbClient.storage.from(BUCKET).upload(path,blob,{contentType:"image/jpeg"});
+        if(up.error) throw up.error;
+        current.photos.push(sbClient.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);
+        renderPhotos();
+      }catch(err){ alert("Photo upload failed: "+(err.message||err)); }
+    }
+  };
+}
+function shrink(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{ const max=1400; let{width:w,height:h}=img; const s=Math.min(1,max/Math.max(w,h)); w=Math.round(w*s); h=Math.round(h*s);
+      const c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url); c.toBlob(b=>b?res(b):rej(new Error("blob")),"image/jpeg",0.7); };
+    img.onerror=rej; img.src=url;
+  });
+}
+
+/* ---- recompute ---- */
+function recompute(){
+  const r=calc(current);
+  current.parts.forEach((g,gi)=>{ const gs=$("#gsub_"+gi); if(gs)gs.textContent=gbp(g._sub); g.items.forEach((it,ii)=>{ const el=$("#lt_"+gi+"_"+ii); if(el)el.textContent=gbp(it._line); }); });
+  const gh=$("#gpvHead"); if(gh) gh.innerHTML="— gross "+gbp(r.gpv);
+  const v=$("#verdict"); v.className="verdict "+r.cls;
+  v.innerHTML=`<div class="tag">Verdict</div><div class="big">${r.verdict}</div>
+    <div class="maxbuy"><div class="lab">Pay no more than</div><div class="amt">${gbp(r.maxBuy)}</div></div>
+    <div class="note">${r.note}</div>`;
+  $("#breakdown").innerHTML=`
+    <div class="ln"><span>Gross parts value</span><span>${gbp(r.gpv)}</span></div>
+    <div class="ln"><span>Selling fees (${current.a.feePct}%)</span><span style="color:var(--red)">−${gbp(r.fees)}</span></div>
+    <div class="ln"><span>Strip labour (${current.a.stripHours}h)</span><span style="color:var(--red)">−${gbp(r.labour)}</span></div>
+    <div class="ln"><span>Transport + storage</span><span style="color:var(--red)">−${gbp(num(current.a.transport)+num(current.a.storage))}</span></div>
+    <div class="ln"><span>Scrap recovered</span><span style="color:var(--green)">+${gbp(r.scrap)}</span></div>
+    <div class="ln"><span><b>Net recoverable</b></span><span><b>${gbp(r.net)}</b></span></div>
+    <div class="ln"><span>Purchase price</span><span style="color:var(--red)">−${gbp(r.purchase)}</span></div>
+    <div class="ln total"><span>Margin</span><span style="color:${r.margin>=0?'var(--green)':'var(--red)'}">${gbp(r.margin)}</span></div>
+    <div class="ln"><span>Return on outlay</span><span>${isFinite(r.roi)?Math.round(r.roi)+"%":"—"}</span></div>`;
+}
+</script>
+</body>
+</html>
