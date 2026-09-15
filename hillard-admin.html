@@ -144,9 +144,44 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transition:all 0.3s;z-index:200;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+/* ── MOBILE NAV (sidebar is hidden on phones) ────── */
+.mnav{display:none;gap:6px;padding:8px 12px;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.mnav::-webkit-scrollbar{display:none;}
+.mnav .nav-item{white-space:nowrap;padding:7px 12px;font-size:12px;border:1px solid var(--border);border-radius:999px;gap:6px;}
+.mnav .nav-item.active{border-color:rgba(232,41,28,0.4);}
+.mnav .nav-item.ext{color:var(--muted);}
+.nav-item.ext svg.ext-ico{width:11px;height:11px;margin-left:auto;opacity:.6;}
+
+/* ── INVOICE WORK QUEUE ──────────────────────────── */
+.inv-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);}
+.inv-tools .search-bar{flex:1;min-width:180px;}
+.inv-list{padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.inv-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.inv-card.needs{border-left:3px solid var(--amber);}
+.inv-card.done{border-left:3px solid var(--green);}
+.inv-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.inv-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.04em;}
+.inv-total{margin-left:auto;font-weight:700;font-size:15px;white-space:nowrap;}
+.inv-meta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5;}
+.inv-meta strong{color:var(--text2);font-weight:600;}
+.inv-quick{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+.inv-quick input{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;}
+.inv-quick input:focus{border-color:var(--red);}
+.inv-quick input.plate{width:118px;text-transform:uppercase;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.08em;font-size:14px;}
+.inv-quick input.miles{width:104px;}
+.inv-quick .go{background:var(--red);color:white;border:none;border-radius:7px;padding:9px 14px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;}
+.inv-quick .go.ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.inv-quick .go.ghost:hover{border-color:var(--red);color:var(--red);}
+.inv-quick .go.green{background:rgba(34,197,94,0.14);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+.svc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.svc-chips .tf-btn{padding:7px 12px;font-size:12px;}
+.inv-more{padding:12px;text-align:center;}
+@media(max-width:600px){ .inv-quick input.plate{width:100%;} .inv-quick input.miles{flex:1;} .inv-quick .go{flex:1;} }
+
 /* ── RESPONSIVE ──────────────────────────────────── */
 @media(max-width:900px){
   .sidebar{display:none;}
+  .mnav{display:flex;}
   .stats-row{grid-template-columns:repeat(2,1fr);}
 }
 @media(max-width:600px){
@@ -228,6 +263,24 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
           Vehicles
         </div>
       </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Tools</div>
+        <a class="nav-item ext" href="hillard-jobsheet.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Job Sheets
+          <svg class="ext-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="nav-item ext" href="hillard-break-appraisal.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Break Appraisals
+          <svg class="ext-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="nav-item ext" href="hillard-admin1.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Status &amp; Access
+          <svg class="ext-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </div>
     </nav>
     <div class="sidebar-footer">
       Hillard Performance &copy; 2025
@@ -246,6 +299,19 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
         <button class="topbar-btn" onclick="signOut()">Sign Out</button>
       </div>
     </header>
+
+    <nav class="mnav" id="mnav">
+      <div class="nav-item active" onclick="showPanel('dashboard')">Dashboard</div>
+      <div class="nav-item" onclick="showPanel('bookings')">Bookings</div>
+      <div class="nav-item" onclick="showPanel('invoices')">Invoices</div>
+      <div class="nav-item" onclick="showPanel('customers')">Customers</div>
+      <div class="nav-item" onclick="showPanel('vehicles')">Vehicles</div>
+      <div class="nav-item" onclick="showPanel('calendar')">Availability</div>
+      <div class="nav-item" onclick="showPanel('quotes')">Quotes</div>
+      <a class="nav-item ext" href="hillard-jobsheet.html">Job Sheets ↗</a>
+      <a class="nav-item ext" href="hillard-break-appraisal.html">Appraisals ↗</a>
+      <a class="nav-item ext" href="hillard-admin1.html">Status ↗</a>
+    </nav>
 
     <div class="content">
 
@@ -338,14 +404,21 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
         <div class="stats-row" id="inv-stats"></div>
         <div class="data-table-wrap">
           <div class="table-header">
-            <div class="table-title">All Invoices</div>
+            <div class="table-title">Invoices</div>
             <div style="display:flex;gap:8px;">
               <div class="table-filters" id="inv-filters"></div>
               <button class="topbar-btn primary" onclick="openInvoicePanel()">+ New Invoice</button>
             </div>
           </div>
-          <table class="data-table"><thead><tr><th>Customer</th><th>Vehicle</th><th>Invoice #</th><th>Total</th><th>Status</th><th style="width:100px;">Actions</th></tr></thead>
-          <tbody id="inv-tbody"></tbody></table>
+          <div class="inv-tools">
+            <div class="search-bar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="inv-search" placeholder="Plate, name, invoice number…" autocomplete="off" oninput="invSearchChanged(this.value)">
+            </div>
+            <span id="inv-count" style="font-size:12px;color:var(--muted);white-space:nowrap;"></span>
+          </div>
+          <div class="inv-list" id="inv-list"></div>
+          <div class="inv-more" id="inv-more"></div>
         </div>
       </div>
 
@@ -422,7 +495,7 @@ async function init() {
 async function loadAll() {
   const [bk, inv, qt, cust, veh] = await Promise.all([
     supabase.from('bookings').select('*, customers(first_name, last_name, email), vehicles(registration, make, model)').order('created_at', { ascending: false }),
-    supabase.from('invoices').select('*, invoice_line_items(*), customers(first_name, last_name, email), vehicles(registration, make, model), service_history(title, vehicles(registration, make, model))').order('created_at', { ascending: false }),
+    supabase.from('invoices').select('*, invoice_line_items(*), customers(first_name, last_name, email), vehicles(registration, make, model), service_history(id, title, job_type, date, vehicles(registration, make, model))').order('created_at', { ascending: false }),
     supabase.from('quotes').select('*, quote_line_items(*), customers(first_name, last_name, email), vehicles(registration, make, model)').order('created_at', { ascending: false }),
     supabase.from('customers').select('*, vehicles(id), bookings(id)').order('created_at', { ascending: false }),
     supabase.from('vehicles').select('*, customers(first_name, last_name)').order('created_at', { ascending: false })
@@ -1130,50 +1203,237 @@ function invCustomerCell(i) {
     : '<span style="color:var(--muted);">—</span>'
 }
 
+// ══════════════════════════════════════════════════════
+// ── INVOICES: the work queue ──
+// Every Zoho invoice as a card. Unallocated ones get a one-line
+// plate + mileage box; allocated ones get a Service button that
+// writes the car's history. Newest first, 60 at a time.
+// ══════════════════════════════════════════════════════
+let invFilter = 'all'
+let invSearch = ''
+let invShown = 60
+const INV_PAGE = 60
+
+window.filterInvoices = function(s) { invFilter = s; invShown = INV_PAGE; renderInvoices(s) }
+window.invSearchChanged = function(q) { invSearch = (q || '').trim().toLowerCase(); invShown = INV_PAGE; renderInvoices(invFilter) }
+window.invShowMore = function() { invShown += INV_PAGE; renderInvoices(invFilter) }
+
+function invMatchesSearch(i, q) {
+  if (!q) return true
+  const qn = normReg(q)
+  const v = invVehicle(i)
+  const hay = [
+    i.invoice_number, i.zoho_customer_name, i.zoho_reference, i.detected_plate,
+    v?.registration, custName(i.customers), i.customers?.email
+  ].map(x => String(x || '').toLowerCase()).join(' ')
+  return hay.includes(q) || (qn.length >= 3 && normReg(hay).includes(qn))
+}
+
 function renderInvoices(filter) {
   filter = filter || 'all'
+  invFilter = filter
   const unallocatedCount = allInvoices.filter(i => !i.vehicle_id).length
-  const statuses = [['all','All'],['unpaid','Unpaid'],['paid','Paid'],['unallocated',`No vehicle (${unallocatedCount})`]]
+  const unloggedCount = allInvoices.filter(i => i.vehicle_id && !i.service_history).length
+  const statuses = [['all','All'],['unpaid','Unpaid'],['paid','Paid'],['unallocated',`No car (${unallocatedCount})`],['unlogged',`No history (${unloggedCount})`]]
   document.getElementById('inv-filters').innerHTML = statuses.map(([s,label]) =>
     `<button class="tf-btn ${filter===s?'active':''}" onclick="filterInvoices('${s}')">${label}</button>`
   ).join('')
 
   let list = allInvoices
-  if (filter === 'unallocated') list = allInvoices.filter(i => !i.vehicle_id)
-  else if (filter === 'unpaid') list = allInvoices.filter(i => i.status !== 'paid')
-  else if (filter !== 'all') list = allInvoices.filter(i => i.status === filter)
+  if (filter === 'unallocated') list = list.filter(i => !i.vehicle_id)
+  else if (filter === 'unlogged') list = list.filter(i => i.vehicle_id && !i.service_history)
+  else if (filter === 'unpaid') list = list.filter(i => i.status !== 'paid')
+  else if (filter !== 'all') list = list.filter(i => i.status === filter)
+  if (invSearch) list = list.filter(i => invMatchesSearch(i, invSearch))
 
   const totalVal = allInvoices.reduce((s,i)=>s+(i.total||0),0)
   const paidVal = allInvoices.filter(i=>i.status==='paid').reduce((s,i)=>s+(i.total||0),0)
   const unpaidVal = allInvoices.filter(i=>i.status!=='paid').reduce((s,i)=>s+(i.total||0),0)
 
   document.getElementById('inv-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-label">Total Invoices</div><div class="stat-value">${allInvoices.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Value</div><div class="stat-value">${money(totalVal)}</div></div>
+    <div class="stat-card"><div class="stat-label">Invoices</div><div class="stat-value">${allInvoices.length}</div></div>
     <div class="stat-card"><div class="stat-label">Paid</div><div class="stat-value" style="color:var(--green)">${money(paidVal)}</div></div>
     <div class="stat-card"><div class="stat-label">Outstanding</div><div class="stat-value" style="color:var(--red)">${money(unpaidVal)}</div></div>
-    <div class="stat-card" style="cursor:pointer;" onclick="filterInvoices('unallocated')"><div class="stat-label">No Vehicle</div><div class="stat-value" style="color:${unallocatedCount ? 'var(--amber)' : 'var(--green)'}">${unallocatedCount}</div></div>
+    <div class="stat-card" style="cursor:pointer;" onclick="filterInvoices('unallocated')"><div class="stat-label">No car yet</div><div class="stat-value" style="color:${unallocatedCount ? 'var(--amber)' : 'var(--green)'}">${unallocatedCount}</div></div>
+    <div class="stat-card" style="cursor:pointer;" onclick="filterInvoices('unlogged')"><div class="stat-label">Not in history</div><div class="stat-value" style="color:${unloggedCount ? 'var(--amber)' : 'var(--green)'}">${unloggedCount}</div></div>
   `
 
-  document.getElementById('inv-tbody').innerHTML = list.length ? list.map(i => {
-    const v = invVehicle(i)
-    return `<tr>
-      <td>${invCustomerCell(i)}</td>
-      <td>${v ? regBadge(v.registration) : `<button class="tf-btn" style="color:var(--amber);border-color:rgba(245,158,11,0.35);" onclick="openAllocatePanel('${i.id}')">Allocate${i.detected_plate ? ' · ' + escHtml(i.detected_plate) : ''}</button>`}</td>
-      <td>#${i.invoice_number||'—'}${i.mileage ? `<div style="font-size:10px;color:var(--muted);">${Number(i.mileage).toLocaleString('en-GB')} mi</div>` : ''}</td>
-      <td><strong>${money(i.total)}</strong></td>
-      <td>${statusBadge(i.status)}</td>
-      <td><div class="row-actions">
-        <button class="row-btn" onclick="openInvoiceDetail('${i.id}')" title="View"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-        <button class="row-btn" onclick="openAllocatePanel('${i.id}')" title="${v ? 'Change vehicle' : 'Allocate to a vehicle'}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="5" width="15" height="11" rx="2"/><path d="M16 9h4l3 3.5v2.5h-7V9z"/><circle cx="5.5" cy="17.5" r="2"/><circle cx="18.5" cy="17.5" r="2"/></svg></button>
-        <button class="row-btn" onclick="downloadInvoicePDF('${i.id}')" title="Download PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-        <button class="row-btn" onclick="toggleInvoicePaid('${i.id}','${i.status}')" title="${i.status==='paid'?'Mark Unpaid':'Mark Paid'}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></button>
-      </div></td>
-    </tr>`
-  }).join('') : '<tr><td class="empty-row" colspan="6">No invoices found</td></tr>'
+  document.getElementById('inv-count').textContent = list.length === allInvoices.length ? `${list.length} invoices` : `${list.length} of ${allInvoices.length}`
+  const page = list.slice(0, invShown)
+  document.getElementById('inv-list').innerHTML = page.length ? page.map(invCard).join('') : `<div class="empty-row" style="padding:30px;text-align:center;color:var(--muted);">Nothing here</div>`
+  document.getElementById('inv-more').innerHTML = list.length > invShown
+    ? `<button class="tf-btn" onclick="invShowMore()">Show ${Math.min(INV_PAGE, list.length - invShown)} more · ${list.length - invShown} left</button>` : ''
 }
-let invFilter = 'all'
-window.filterInvoices = function(s) { invFilter = s; renderInvoices(s) }
+
+function invCard(i) {
+  const v = invVehicle(i)
+  const hist = i.service_history
+  const when = i.created_at ? new Date(i.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : ''
+  const who = i.customers ? custName(i.customers) : null
+  const zohoName = i.zoho_customer_name && i.zoho_customer_name !== who ? i.zoho_customer_name : null
+  const miles = i.mileage ? Number(i.mileage).toLocaleString('en-GB') + ' mi' : ''
+  const cls = !v ? 'needs' : (hist ? 'done' : '')
+
+  let quick
+  if (!v) {
+    quick = `
+      <div class="inv-quick">
+        <input class="plate" id="qp-${i.id}" placeholder="PLATE" value="${escHtml(i.detected_plate || '')}" autocapitalize="characters" autocomplete="off" onkeydown="if(event.key==='Enter')quickLink('${i.id}')">
+        <input class="miles" id="qm-${i.id}" type="number" inputmode="numeric" placeholder="Miles" value="${i.mileage || ''}" onkeydown="if(event.key==='Enter')quickLink('${i.id}')">
+        <button class="go" onclick="quickLink('${i.id}')">Link</button>
+        <button class="go ghost" onclick="openAllocatePanel('${i.id}')" title="Search cars or add a new one">Find / add car</button>
+      </div>`
+  } else if (hist) {
+    quick = `
+      <div class="inv-quick">
+        <span style="font-size:12px;color:var(--green);font-weight:600;">✓ ${escHtml(hist.job_type ? hist.job_type.toUpperCase() : 'LOGGED')} · ${escHtml(hist.title || '')}${hist.date ? ' · ' + new Date(hist.date).toLocaleDateString('en-GB') : ''}</span>
+        <button class="go ghost" style="margin-left:auto;" onclick="unlogService('${i.id}')">Undo</button>
+      </div>`
+  } else {
+    quick = `
+      <div class="inv-quick">
+        <input class="miles" id="qm-${i.id}" type="number" inputmode="numeric" placeholder="Miles" value="${i.mileage || ''}">
+        <button class="go green" onclick="toggleSvcChips('${i.id}')">Log to history</button>
+        <button class="go ghost" onclick="openAllocatePanel('${i.id}')">Change car</button>
+      </div>
+      <div class="svc-chips" id="chips-${i.id}" style="display:none;">
+        ${[['service','Service'],['mot','MOT'],['repair','Repair'],['tyres','Tyres'],['remap','Remap'],['other','Other']].map(([t,l]) => `<button class="tf-btn" onclick="logService('${i.id}','${t}')">${l}</button>`).join('')}
+      </div>`
+  }
+
+  return `
+    <div class="inv-card ${cls}" data-inv="${i.id}">
+      <div class="inv-top">
+        ${v ? regBadge(escHtml(v.registration)) : (i.detected_plate ? `<span class="tf-btn" style="cursor:default;color:var(--amber);border-color:rgba(245,158,11,0.35);">${escHtml(i.detected_plate)}?</span>` : '')}
+        <span class="inv-num">#${escHtml(i.invoice_number || '—')}</span>
+        ${statusBadge(i.status)}
+        <span class="inv-total">${money(i.total)}</span>
+      </div>
+      <div class="inv-meta">
+        ${who ? `<strong>${escHtml(who)}</strong>` : `<strong style="color:var(--amber);">No customer</strong>`}
+        ${zohoName ? ` · Zoho: ${escHtml(zohoName)}` : ''}
+        ${v && (v.make || v.model) ? ` · ${escHtml(`${v.make||''} ${v.model||''}`.trim())}` : ''}
+        ${miles ? ` · ${miles}` : ''}
+        ${when ? ` · ${when}` : ''}
+        ${i.zoho_reference ? `<div>Ref: ${escHtml(i.zoho_reference)}</div>` : ''}
+      </div>
+      ${quick}
+      <div class="row-actions" style="margin-top:8px;">
+        <button class="row-btn" onclick="openInvoiceDetail('${i.id}')" title="View"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button class="row-btn" onclick="downloadInvoicePDF('${i.id}')" title="Open PDF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+        <button class="row-btn" onclick="toggleInvoicePaid('${i.id}','${i.status}')" title="${i.status==='paid'?'Mark Unpaid':'Mark Paid'}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></button>
+      </div>
+    </div>`
+}
+
+// One-line link: type the plate, hit Link. Known car → linked on the spot.
+// Unknown car → the full panel opens with the plate carried across.
+window.quickLink = async function(id) {
+  const plate = normReg(document.getElementById('qp-' + id)?.value)
+  const milesRaw = document.getElementById('qm-' + id)?.value
+  const miles = milesRaw ? parseInt(milesRaw, 10) : null
+  if (!plate) { showToast('Type the plate first'); return }
+  const veh = allVehicles.find(v => normReg(v.registration) === plate)
+  if (!veh) {
+    allocInvoiceId = id
+    openAllocatePanel(id)
+    setTimeout(() => {
+      const r = document.getElementById('nc-reg'); if (r) r.value = plate
+      const m = document.getElementById('alloc-miles'); if (m && miles) m.value = miles
+      allocSearch(plate)
+    }, 60)
+    return
+  }
+  await linkInvoice(id, veh.id, miles)
+}
+
+// Shared write used by the quick box and the panel.
+async function linkInvoice(invoiceId, vehicleId, miles) {
+  const inv = allInvoices.find(x => x.id === invoiceId)
+  const veh = allVehicles.find(x => x.id === vehicleId)
+  if (!inv || !veh) { showToast('Something went missing — reload and try again'); return false }
+
+  if (inv.customer_id && veh.customer_id && inv.customer_id !== veh.customer_id) {
+    const owner = custName(veh.customers)
+    if (!confirm(`This invoice is linked to ${custName(inv.customers)}, but ${veh.registration} belongs to ${owner}. Move the invoice to ${owner}?`)) return false
+  }
+
+  const patch = { vehicle_id: veh.id }
+  if (veh.customer_id) patch.customer_id = veh.customer_id
+  if (miles && miles > 0) patch.mileage = miles
+
+  const { error } = await supabase.from('invoices').update(patch).eq('id', inv.id)
+  if (error) { showToast('Error: ' + error.message); return false }
+  if (miles && miles > (veh.last_mileage || 0)) {
+    await supabase.from('vehicles').update({ last_mileage: miles }).eq('id', veh.id)
+  }
+  showToast(`#${inv.invoice_number || ''} → ${veh.registration}`)
+  await loadAll()
+  renderInvoices(invFilter)
+  return true
+}
+
+// ── Service button: invoice → service_history row on the car ──
+window.toggleSvcChips = function(id) {
+  const el = document.getElementById('chips-' + id)
+  if (el) el.style.display = el.style.display === 'none' ? 'flex' : 'none'
+}
+
+window.logService = async function(id, jobType) {
+  const inv = allInvoices.find(x => x.id === id)
+  if (!inv || !inv.vehicle_id) { showToast('Link the invoice to a car first'); return }
+  const milesRaw = document.getElementById('qm-' + id)?.value
+  const miles = milesRaw ? parseInt(milesRaw, 10) : (inv.mileage || null)
+  const labels = { service:'Service', mot:'MOT', repair:'Repair', tyres:'Tyres', remap:'Remap', other:'Work carried out' }
+  const date = (inv.created_at || new Date().toISOString()).substring(0, 10)
+
+  const row = {
+    vehicle_id: inv.vehicle_id,
+    customer_id: inv.customer_id || null,
+    job_type: jobType,
+    title: labels[jobType] || 'Work carried out',
+    description: inv.zoho_reference || null,
+    garage_name: 'Hillard Performance',
+    is_external: false,
+    date,
+    mileage: miles
+  }
+  const { data: h, error } = await supabase.from('service_history').insert(row).select('id').single()
+  if (error) { showToast('Error: ' + error.message); return }
+
+  const patch = { service_history_id: h.id }
+  if (miles && !inv.mileage) patch.mileage = miles
+  const { error: e2 } = await supabase.from('invoices').update(patch).eq('id', id)
+  if (e2) { showToast('Logged, but couldn\u2019t tag the invoice: ' + e2.message) }
+
+  // Keep the car's own numbers current
+  const veh = allVehicles.find(v => v.id === inv.vehicle_id)
+  const vpatch = {}
+  if (miles && miles > (veh?.last_mileage || 0)) vpatch.last_mileage = miles
+  if (jobType === 'service') {
+    const due = new Date(date); due.setFullYear(due.getFullYear() + 1)
+    if (!veh?.service_due || new Date(veh.service_due) < due) vpatch.service_due = due.toISOString().substring(0, 10)
+  }
+  if (Object.keys(vpatch).length) await supabase.from('vehicles').update(vpatch).eq('id', inv.vehicle_id)
+
+  showToast(`${labels[jobType]} logged on ${veh?.registration || 'the car'}`)
+  await loadAll()
+  renderInvoices(invFilter)
+}
+
+window.unlogService = async function(id) {
+  const inv = allInvoices.find(x => x.id === id)
+  if (!inv?.service_history?.id) return
+  if (!confirm('Remove this entry from the car\u2019s history?')) return
+  const hid = inv.service_history.id
+  const { error: e1 } = await supabase.from('invoices').update({ service_history_id: null }).eq('id', id)
+  if (e1) { showToast('Error: ' + e1.message); return }
+  const { error: e2 } = await supabase.from('service_history').delete().eq('id', hid)
+  if (e2) { showToast('Error: ' + e2.message); return }
+  showToast('History entry removed')
+  await loadAll()
+  renderInvoices(invFilter)
+}
 
 // ── ALLOCATE INVOICE → VEHICLE ──
 // Zoho invoices arrive with the plate typed in the customer name or the
@@ -1381,33 +1641,11 @@ window.allocLookup = async function() {
 // The actual write. customer_id follows the vehicle's owner unless the
 // invoice is already linked to someone (then it's left alone and flagged).
 window.allocateInvoiceTo = async function(vehicleId) {
-  const inv = allInvoices.find(x => x.id === allocInvoiceId)
-  const veh = allVehicles.find(x => x.id === vehicleId)
-  if (!inv || !veh) { showToast('Something went missing — reload and try again'); return }
-
   const milesRaw = document.getElementById('alloc-miles')?.value
   const miles = milesRaw ? parseInt(milesRaw, 10) : null
-
-  if (inv.customer_id && veh.customer_id && inv.customer_id !== veh.customer_id) {
-    const owner = custName(veh.customers)
-    if (!confirm(`This invoice is linked to ${custName(inv.customers)}, but ${veh.registration} belongs to ${owner}. Move the invoice to ${owner}?`)) return
-  }
-
-  const patch = { vehicle_id: veh.id }
-  if (veh.customer_id) patch.customer_id = veh.customer_id
-  if (miles && miles > 0) patch.mileage = miles
-
-  const { error } = await supabase.from('invoices').update(patch).eq('id', inv.id)
-  if (error) { showToast('Error: ' + error.message); return }
-
-  if (miles && miles > (veh.last_mileage || 0)) {
-    await supabase.from('vehicles').update({ last_mileage: miles }).eq('id', veh.id)
-  }
-
-  showToast(`#${inv.invoice_number || ''} → ${veh.registration}`)
-  closePanel()
-  await loadAll()
-  renderInvoices(invFilter)
+  const id = allocInvoiceId
+  const ok = await linkInvoice(id, vehicleId, miles)
+  if (ok) closePanel()
 }
 
 window.allocClear = async function() {
@@ -1719,6 +1957,10 @@ window.handleSearch = function(q) {
   q = q.toLowerCase().trim()
   if (!q) { showPanel(currentPanel); return }
   // For now just filter visible table rows
+  if (currentPanel === 'invoices') {
+    const box = document.getElementById('inv-search'); if (box) box.value = q
+    invSearchChanged(q); return
+  }
   const panel = document.getElementById('panel-' + currentPanel)
   panel.querySelectorAll('.data-table tbody tr').forEach(row => {
     row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none'
