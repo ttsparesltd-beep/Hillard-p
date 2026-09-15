@@ -99,9 +99,6 @@ body{background:var(--bg);color:var(--text);font-family:"DM Sans",sans-serif;min
   <div class="nav-item active" onclick="window.location='hillard-invoices.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices
   </div>
-  <div class="nav-item" onclick="window.location='hillard-service-history.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>History
-  </div>
     <div class="nav-item" onclick="window.location='hillard-calendar.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendar
   </div>
@@ -147,7 +144,7 @@ async function init() {
 
   const { data: invoices } = await sbClient
     .from('invoices')
-    .select('*, invoice_line_items(*), service_history(title, vehicles(registration, make, model)), vehicle_id')
+    .select('*, invoice_line_items(*), vehicles(registration, make, model), service_history(title, vehicles(registration, make, model))')
     .eq('customer_id', customer.id)
     .order('created_at', { ascending: false })
 
@@ -180,9 +177,12 @@ function renderInvoices(invoices) {
 
   list.innerHTML = invoices.map(inv => {
     const isPaid = inv.status === 'paid'
-    const vehicle = inv.service_history?.vehicles
+    // Vehicle comes straight off the invoice now (set by the Zoho sync or
+    // allocated in admin); the service-history hop is kept as a fallback.
+    const vehicle = inv.vehicles || inv.service_history?.vehicles
     const reg = vehicle?.registration || ''
-    const title = inv.service_history?.title || 'Invoice'
+    const title = inv.service_history?.title || (vehicle ? `${vehicle.make||''} ${vehicle.model||''}`.trim() || 'Invoice' : 'Invoice')
+    const miles = inv.mileage ? `&middot; ${Number(inv.mileage).toLocaleString('en-GB')} mi` : ''
     const lines = (inv.invoice_line_items || []).sort((a,b) => a.sort_order - b.sort_order)
 
     return `<div class="inv-card" data-status="${inv.status || 'unpaid'}" onclick="toggleCard(this)">
@@ -192,7 +192,7 @@ function renderInvoices(invoices) {
           <div class="inv-title">${title}</div>
           <div class="inv-meta">
             ${reg ? `<span class="inv-reg">${reg}</span>` : ''}
-            ${formatDate(inv.created_at)} &middot; #${inv.invoice_number || ''}
+            ${formatDate(inv.created_at)} &middot; #${inv.invoice_number || ''} ${miles}
           </div>
         </div>
         <div class="inv-right">
@@ -246,6 +246,8 @@ window.openPdf = async function(invoiceId, btn) {
   btn.style.opacity = '0.5'
   btn.textContent = 'Opening...'
 
+  // Open the tab inside the tap: Safari blocks window.open after an await.
+  const tab = window.open('', '_blank')
   try {
     const { data, error } = await sbClient.storage
       .from('hillard-docs')
@@ -253,12 +255,14 @@ window.openPdf = async function(invoiceId, btn) {
 
     if (error || !data?.signedUrl) {
       console.error('Signed URL failed:', error)
+      if (tab) tab.close()
       alert("Couldn't open that invoice. Give us a shout and we'll email it over.")
       return
     }
-    window.open(data.signedUrl, '_blank')
+    if (tab) tab.location.href = data.signedUrl; else window.location.href = data.signedUrl
   } catch (err) {
     console.error(err)
+    if (tab) tab.close()
     alert('Something went wrong opening that invoice.')
   } finally {
     btn.disabled = false
