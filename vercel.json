@@ -1,7 +1,20 @@
 {
   "rewrites": [
-    { "source": "/job-sheets", "destination": "/hillard-jobsheet.html" },
-    { "source": "/support", "destination": "/support.html" },
-    { "source": "/privacy", "destination": "/privacy.html" }
+    {
+      "source": "/admin",
+      "destination": "/hillard-admin1.html"
+    },
+    {
+      "source": "/job-sheets",
+      "destination": "/hillard-jobsheet.html"
+    },
+    {
+      "source": "/support",
+      "destination": "/support.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    }
   ]
 }

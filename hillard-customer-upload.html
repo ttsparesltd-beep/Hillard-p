@@ -128,19 +128,16 @@ body{background:var(--bg);color:var(--text);font-family:"DM Sans",sans-serif;min
   </div>
 </div>
 <nav class="bottom-nav">
-  <div class="nav-item " onclick="window.location='index.html'">
+  <div class="nav-item active" onclick="window.location='index.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Garage
   </div>
-  <div class="nav-item " onclick="window.location='hillard-invoices.html'">
+  <div class="nav-item" onclick="window.location='hillard-invoices.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices
   </div>
-  <div class="nav-item " onclick="window.location='hillard-service-history.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>History
+  <div class="nav-item" onclick="window.location='hillard-calendar.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendar
   </div>
-  <div class="nav-item active" onclick="window.location='hillard-customer-upload.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add Record
-  </div>
-  <div class="nav-item " onclick="window.location='hillard-account.html'">
+  <div class="nav-item" onclick="window.location='hillard-account.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Account
   </div>
 </nav>
@@ -180,7 +177,7 @@ async function init() {
   const initials = (currentCustomer.first_name?.[0]||'') + (currentCustomer.last_name?.[0]||'')
   document.getElementById('avatar').textContent = initials || '?'
 
-  const { data: vehicles } = await supabase
+  const { data: vehicles } = await sbClient
     .from('vehicles').select('*')
     .eq('customer_id', currentCustomer.id)
 
@@ -191,7 +188,11 @@ async function init() {
     sel.innerHTML = vehicles.map(v =>
       `<option value="${v.id}">${v.registration} — ${v.make||''} ${v.model||''}</option>`
     ).join('')
-    currentVehicleId = vehicles[0].id
+    // Arrived from a car's Service History page? Preselect that car.
+    const wanted = new URLSearchParams(location.search).get('vehicle')
+    const preset = wanted && vehicles.find(v => v.id === wanted)
+    currentVehicleId = preset ? preset.id : vehicles[0].id
+    sel.value = currentVehicleId
   }
 
   sel.addEventListener('change', () => { currentVehicleId = sel.value })
@@ -264,7 +265,7 @@ async function saveRecord() {
 
   if (error) { showToast('Error saving — please try again'); return }
   showToast('Record saved to service history')
-  setTimeout(() => window.location.href = 'hillard-service-history.html', 1500)
+  setTimeout(() => window.location.href = 'hillard-service-history.html?vehicle=' + encodeURIComponent(currentVehicleId), 1500)
 }
 
 function showToast(msg) {

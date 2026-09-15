@@ -40,6 +40,15 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 .pill-label{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
 .pill-value{font-family:"Rajdhani",sans-serif;font-size:15px;font-weight:700;line-height:1.2;}
 
+/* SERVICE HISTORY BAR — one per car, always visible */
+.vc-history{display:flex;align-items:center;gap:12px;margin:0 18px 14px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text);transition:border-color 0.2s,background 0.2s;}
+.vc-history:hover{border-color:var(--red);background:var(--red-dim);}
+.vc-history-icon{width:32px;height:32px;border-radius:8px;background:var(--red-dim);border:1px solid var(--red-glow);display:flex;align-items:center;justify-content:center;color:var(--red);flex-shrink:0;}
+.vc-history-text{flex:1;min-width:0;}
+.vc-history-title{font-family:"Rajdhani",sans-serif;font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;line-height:1.2;}
+.vc-history-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.vc-history-chev{color:var(--muted);flex-shrink:0;}
+
 /* ADD CAR BUTTON */
 .add-car-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:transparent;border:2px dashed #3a3a45;border-radius:16px;padding:20px;width:100%;cursor:pointer;color:var(--muted);font-family:"Rajdhani",sans-serif;font-size:14px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;transition:border-color 0.2s,color 0.2s,background 0.2s;margin-bottom:14px;animation:fadeUp 0.4s ease both;}
 .add-car-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-dim);}
@@ -158,10 +167,7 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
   <div class="nav-item" onclick="window.location='hillard-invoices.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Invoices
   </div>
-  <div class="nav-item" onclick="window.location='hillard-service-history.html'">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>History
-  </div>
-    <div class="nav-item" onclick="window.location='hillard-calendar.html'">
+  <div class="nav-item" onclick="window.location='hillard-calendar.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendar
   </div>
   <div class="nav-item" onclick="window.location='hillard-account.html'">
@@ -216,6 +222,34 @@ async function init() {
   document.getElementById('greeting-text').textContent = customer.first_name ? `Hi, ${customer.first_name}` : 'My Garage'
 
   await loadVehicles()
+}
+
+// Fill in "3 records · 2 invoices" on each car's Service History bar.
+// Two small queries for all cars at once; failures just leave the default text.
+async function loadHistoryCounts(vehicles) {
+  const ids = (vehicles || []).map(v => v.id)
+  if (!ids.length) return
+  try {
+    const [hist, inv] = await Promise.all([
+      sbClient.from('service_history').select('vehicle_id').in('vehicle_id', ids),
+      sbClient.from('invoices').select('vehicle_id').in('vehicle_id', ids)
+    ])
+    const hCount = {}, iCount = {}
+    ;(hist.data || []).forEach(r => { hCount[r.vehicle_id] = (hCount[r.vehicle_id] || 0) + 1 })
+    ;(inv.data || []).forEach(r => { iCount[r.vehicle_id] = (iCount[r.vehicle_id] || 0) + 1 })
+    ids.forEach(id => {
+      const el = document.getElementById('hist-sub-' + id)
+      if (!el) return
+      const h = hCount[id] || 0, i = iCount[id] || 0
+      if (!h && !i) { el.textContent = 'No records yet'; return }
+      const parts = []
+      if (h) parts.push(`${h} record${h !== 1 ? 's' : ''}`)
+      if (i) parts.push(`${i} invoice${i !== 1 ? 's' : ''}`)
+      el.textContent = parts.join(' · ')
+    })
+  } catch (e) {
+    console.warn('history counts:', e)
+  }
 }
 
 async function loadVehicles() {
@@ -283,6 +317,14 @@ async function loadVehicles() {
         </div>
         ${v.last_mileage ? `<div class="pill"><span class="pill-label">Mileage</span><span class="pill-value">${v.last_mileage.toLocaleString()} mi</span></div>` : ''}
       </div>
+      <a class="vc-history" href="hillard-service-history.html?vehicle=${v.id}" onclick="event.stopPropagation()">
+        <span class="vc-history-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+        <span class="vc-history-text">
+          <span class="vc-history-title">Service History</span>
+          <span class="vc-history-sub" id="hist-sub-${v.id}">Work done &amp; invoices for this car</span>
+        </span>
+        <svg class="vc-history-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
       <div class="vc-expand" id="exp-${v.id}" style="display:none;border-top:1px solid var(--border);padding:14px 18px;">
         <div id="photo-wrap-${v.id}" style="margin-bottom:14px;position:relative;">
           <input type="file" id="photo-input-${v.id}" accept="image/*" style="display:none;" onchange="uploadPhoto(event,'${v.id}')">
@@ -307,10 +349,6 @@ async function loadVehicles() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
             Book a Repair
           </a>
-          <a href="hillard-service-history.html" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:9px;padding:12px 10px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-            History
-          </a>
         </div>
         <button id="refresh-btn-${v.id}" onclick="refreshMOT('${v.id}','${v.registration}')" style="width:100%;background:transparent;border:1px solid #2a2a32;border-radius:9px;padding:10px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#6b6b7a;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:border-color 0.2s,color 0.2s;margin-bottom:10px;" onmouseover="this.style.borderColor='#4a9eff';this.style.color='#4a9eff'" onmouseout="this.style.borderColor='#2a2a32';this.style.color='#6b6b7a'">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -331,6 +369,8 @@ async function loadVehicles() {
       </div>
     </div>`
   }).join('')
+
+  loadHistoryCounts(vehicles)
 
 
 window.refreshMOT = async function(vehicleId, registration) {
