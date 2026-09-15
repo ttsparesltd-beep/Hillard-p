@@ -13,6 +13,7 @@
   const SUPABASE_URL  = "https://ixgotsabbqkkxzsxnwtr.supabase.co";   // <-- paste your Project URL
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4Z290c2FiYnFra3h6c3hud3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTQwOTEsImV4cCI6MjA4Nzg3MDA5MX0.NNH_JEmEEvaMYuM_2F9F4qLqOFXoKb68NM-Ac3PDXyA";            // <-- paste your anon/public key
   const VAT_RATE = 0.20;                                       // UK VAT (20%). Change if needed.
+  const LABOUR_RATE_DEFAULT = 60;                              // £/hr on a new sheet. Change per sheet if needed.
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -210,6 +211,7 @@
   .pill.open{background:#2a1f0c;color:#ffcf8f;}
   .pill.progress{background:#0c2030;color:#8fd3ff;}
   .pill.done{background:#0f2418;color:#9bf0c0;}
+  .pill.invoiced{background:#1a1f3a;color:#a5b4fc;}
   .empty{text-align:center;color:#6c7585;padding:60px 20px;font-family:'Space Mono';}
 
   /* ---------- Toast ---------- */
@@ -305,10 +307,14 @@
           <div class="cell"><span class="lab">Reg</span><input id="reg" placeholder="AB12 CDE" style="text-transform:uppercase;"></div>
           <div class="cell"><span class="lab">Miles</span><input id="miles" placeholder="Mileage"></div>
         </div>
+        <div class="row two">
+          <div class="cell"><span class="lab">Labour rate (£/hr)</span><input id="labourRate" type="number" step="0.5" min="0" placeholder="e.g. 60" oninput="recalc()"></div>
+          <div class="cell"><span class="lab">Invoice</span><div id="invoiceInfo" style="padding:6px 0;font-size:13px;color:#8b98a8;">Not invoiced yet</div></div>
+        </div>
 
         <!-- Jobs table -->
         <div class="jobs-head">
-          <span>Job</span><span>Parts</span><span>Labour</span><span>Price (£)</span><span></span>
+          <span>Job</span><span>Parts</span><span>Hours</span><span>Parts £</span><span></span>
         </div>
         <div id="jobRows"></div>
         <button class="add-row" onclick="addJobRow()">＋ Add job line</button>
@@ -324,10 +330,13 @@
                 <option value="open">Booked / Open</option>
                 <option value="progress">In Progress</option>
                 <option value="done">Done</option>
+                <option value="invoiced">Invoiced</option>
               </select>
             </div>
           </div>
           <div>
+            <div class="tot-line"><span class="k">Labour <span id="labourHint" style="opacity:.7;"></span></span><span class="v" id="labourTot">£0.00</span></div>
+            <div class="tot-line"><span class="k">Parts</span><span class="v" id="partsTot">£0.00</span></div>
             <div class="tot-line"><span class="k">Subtotal</span><span class="v" id="subtotal">£0.00</span></div>
             <div class="tot-line"><span class="k">VAT (<span id="vatPct">20</span>%)</span><span class="v" id="vat">£0.00</span></div>
             <div class="tot-line grand"><span class="k">Total with VAT</span><span class="v" id="total">£0.00</span></div>
@@ -338,6 +347,7 @@
 
     <div class="actions">
       <button class="btn btn-primary" id="saveBtn" onclick="saveSheet()">💾 Save Job Sheet</button>
+      <button class="btn btn-ghost" id="invoiceBtn" style="display:none;" onclick="createZohoInvoice()">📄 Create Zoho invoice</button>
       <button class="btn btn-ghost" onclick="printSheet()">🖨 Print</button>
       <button class="btn btn-ghost" onclick="newSheet()">＋ New / Clear</button>
       <button class="btn btn-danger" id="deleteBtn" style="display:none;" onclick="deleteSheet()">🗑 Delete</button>
@@ -433,17 +443,30 @@ function addJobRow(data={}){
   div.innerHTML=`
     <div><input class="j-job" placeholder="e.g. Drivers side window motor" value="${esc(data.job)}"></div>
     <div><input class="j-parts" placeholder="part" value="${esc(data.parts)}"></div>
-    <div><input class="j-labour" placeholder="hrs" value="${esc(data.labour)}"></div>
+    <div><input class="j-labour" placeholder="hrs" inputmode="decimal" value="${esc(data.labour)}" oninput="recalc()"></div>
     <div class="num"><input class="j-price" type="number" step="0.01" min="0" placeholder="0.00" value="${esc(data.price)}" oninput="recalc()"></div>
     <div><button class="del-row" title="Remove" onclick="this.closest('.job-row').remove();recalc()">×</button></div>`;
   wrap.appendChild(div);
 }
 function esc(v){return v===undefined||v===null?'':String(v).replace(/"/g,'&quot;');}
 
+// Labour = hours × the sheet's rate. Sheets saved before the rate existed
+// have no rate, so their price column still stands as the whole row price.
+function labourCalc(){
+  const rate=parseFloat(document.getElementById('labourRate').value)||0;
+  let hours=0;
+  document.querySelectorAll('.j-labour').forEach(i=>{const n=parseFloat(String(i.value).replace(/[^0-9.]/g,''));if(!isNaN(n))hours+=n;});
+  return {rate, hours, labour: rate>0 ? hours*rate : 0};
+}
 function recalc(){
-  let sub=0;
-  document.querySelectorAll('.j-price').forEach(i=>{const n=parseFloat(i.value);if(!isNaN(n))sub+=n;});
+  let parts=0;
+  document.querySelectorAll('.j-price').forEach(i=>{const n=parseFloat(i.value);if(!isNaN(n))parts+=n;});
+  const {rate,hours,labour}=labourCalc();
+  const sub=parts+labour;
   const vat=sub*VAT_RATE, tot=sub+vat;
+  document.getElementById('labourTot').textContent=money(labour);
+  document.getElementById('labourHint').textContent=rate>0?`(${hours}h × £${rate})`:'(set a rate)';
+  document.getElementById('partsTot').textContent=money(parts);
   document.getElementById('subtotal').textContent=money(sub);
   document.getElementById('vat').textContent=money(vat);
   document.getElementById('total').textContent=money(tot);
@@ -462,7 +485,9 @@ function collect(){
     price:parseFloat(r.querySelector('.j-price').value)||0
   })).filter(j=>j.job||j.parts||j.labour||j.price);
 
-  let sub=jobs.reduce((a,j)=>a+(j.price||0),0);
+  const {labour}=labourCalc();
+  const rateVal=parseFloat(document.getElementById('labourRate').value);
+  let sub=jobs.reduce((a,j)=>a+(j.price||0),0)+labour;
   const vat=sub*VAT_RATE;
 
   return {
@@ -478,6 +503,7 @@ function collect(){
     jobs: jobs,
     tech_report: val('report'),
     status: val('status'),
+    labour_rate: rateVal>0?rateVal:null,
     subtotal: round(sub),
     vat: round(vat),
     total: round(sub+vat)
@@ -487,6 +513,8 @@ function fill(d){
   set('received',d.received_date); set('required',d.required_date);
   set('customer',d.customer); set('reg',d.reg); set('miles',d.miles);
   set('report',d.tech_report); set('status',d.status||'open');
+  set('labourRate', d.labour_rate ?? '');
+  showInvoiceState(d);
   const c=d.contacts||[];
   set('c1name',c[0]?.name); set('c1phone',c[0]?.phone);
   set('c2name',c[1]?.name); set('c2phone',c[1]?.phone);
@@ -508,6 +536,8 @@ function newSheet(){
   document.getElementById('jobRows').innerHTML='';
   addJobRow();addJobRow();addJobRow();
   set('received', new Date().toISOString().slice(0,10));
+  set('labourRate', LABOUR_RATE_DEFAULT);
+  showInvoiceState({});
   document.getElementById('docNo').textContent='NEW SHEET';
   document.getElementById('docDate').textContent=new Date().toLocaleDateString('en-GB');
   document.getElementById('deleteBtn').style.display='none';
@@ -587,7 +617,7 @@ function renderList(){
       <div>
         <div class="who">${escHtml(r.customer||'—')}</div>
         <div class="meta">${escHtml(r.reg||'no reg')} · ${(r.jobs||[]).length} job(s) · ${new Date(r.created_at).toLocaleDateString('en-GB')}</div>
-        <span class="pill ${r.status||'open'}">${({open:'Booked',progress:'In Progress',done:'Done'})[r.status||'open']}</span>
+        <span class="pill ${r.status||'open'}">${({open:'Booked',progress:'In Progress',done:'Done',invoiced:'Invoiced'})[r.status||'open']||r.status}</span>${r.zoho_invoice_number?` <span class="pill done">${escHtml(r.zoho_invoice_number)}</span>`:''}
       </div>
       <div class="right"><div class="price">${money(r.total||0)}</div></div>
     </div>`).join('');
@@ -604,6 +634,66 @@ async function openSheet(id){
   stampDoc(row);
   document.getElementById('deleteBtn').style.display='inline-flex';
   switchView('newView', document.querySelector('.tab[data-view=newView]'));
+}
+
+/* ---------------------------------------------------------------- */
+/*  ZOHO INVOICE                                                     */
+/*  Save the sheet, then ask the zoho-create-invoice function to      */
+/*  raise a DRAFT in Zoho Books: one labour line per job row          */
+/*  (job text, hours × rate). Parts get added in Zoho. When it's sent */
+/*  from Zoho the sync brings it back and logs the car's history.     */
+/* ---------------------------------------------------------------- */
+function showInvoiceState(d){
+  const info=document.getElementById('invoiceInfo');
+  const btn=document.getElementById('invoiceBtn');
+  if(d&&d.zoho_invoice_number){
+    info.innerHTML=`<strong style="color:#3ddc84;">${escHtml(d.zoho_invoice_number)}</strong> · draft in Zoho${d.invoiced_at?' · '+new Date(d.invoiced_at).toLocaleDateString('en-GB'):''}`;
+    btn.style.display='none';
+  }else{
+    info.textContent='Not invoiced yet';
+    btn.style.display=(d&&d.id)?'inline-flex':'none';
+  }
+}
+async function createZohoInvoice(){
+  if(!configured){toast('Not connected to Supabase',true);return;}
+  const data=collect();
+  if(!data.customer&&!data.reg){toast('Add a customer name or reg first',true);return;}
+  if(!data.labour_rate){toast('Set a labour rate first',true);return;}
+  const lines=(data.jobs||[]).filter(j=>j.job&&parseFloat(String(j.labour).replace(/[^0-9.]/g,''))>0);
+  if(!lines.length){toast('Add hours to at least one job line',true);return;}
+
+  const preview=lines.map(j=>`• ${j.job} — ${j.labour}h × £${data.labour_rate}`).join('\n');
+  if(!confirm(`Create a DRAFT invoice in Zoho for ${data.customer||data.reg}?\n\n${preview}\n\nReference: ${data.reg}${data.miles?' '+data.miles.replace(/[^0-9]/g,'')+'miles':''}\nAdd parts in Zoho, then send it from there.`))return;
+
+  const btn=document.getElementById('invoiceBtn');
+  btn.disabled=true;btn.textContent='Creating…';
+  try{
+    // make sure the sheet is saved first so the function reads what's on screen
+    let res;
+    if(currentId){res=await sb.from('job_sheets').update(data).eq('id',currentId).select().single();}
+    else{res=await sb.from('job_sheets').insert(data).select().single();}
+    if(res.error)throw res.error;
+    currentId=res.data.id;
+
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session)throw new Error('Not signed in');
+    const r=await fetch(`${SUPABASE_URL}/functions/v1/zoho-create-invoice`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SUPABASE_ANON_KEY},
+      body:JSON.stringify({job_sheet_id:currentId})
+    });
+    const out=await r.json();
+    if(!r.ok||out.error)throw new Error(out.error||('HTTP '+r.status));
+
+    const {data:row}=await sb.from('job_sheets').select('*').eq('id',currentId).single();
+    if(row){fill(row);stampDoc(row);}
+    toast(`Draft ${out.invoice_number} created in Zoho`);
+    if(out.url&&confirm(`${out.invoice_number} is waiting in Zoho as a draft. Open it now to add parts?`))window.open(out.url,'_blank');
+  }catch(e){
+    toast('Invoice failed: '+e.message,true);
+  }finally{
+    btn.disabled=false;btn.textContent='📄 Create Zoho invoice';
+  }
 }
 
 /* ---------------------------------------------------------------- */
