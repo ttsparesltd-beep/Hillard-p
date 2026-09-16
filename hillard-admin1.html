@@ -139,6 +139,16 @@
   <h2>Tools</h2>
   <div class="tools" id="tools"></div>
 
+  <details class="diag" id="zohoTok" style="display:none;">
+    <summary>Zoho — refresh the API token</summary>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 10px;">Paste the grant code from api-console.zoho.eu (Self Client → Generate Code, scope <code>ZohoBooks.fullaccess.all</code>). You'll get a refresh token to paste into Supabase → Edge Functions → Secrets → <code>ZOHO_REFRESH_TOKEN</code>.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <input id="zcode" placeholder="1000.xxxxxxxx…" style="flex:1;min-width:200px;font:inherit;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);">
+      <button id="zgo">Exchange</button>
+    </div>
+    <div id="zout" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all;color:var(--muted);padding-bottom:12px;"></div>
+  </details>
+
   <details class="diag">
     <summary>Connection details</summary>
     <table>
@@ -249,6 +259,7 @@ async function refresh(){
     $('roleBadge').textContent = 'staff';
     $('roleBadge').className = 'badge staff';
     $('noAccess').classList.add('hide');
+    $('zohoTok').style.display = '';
     renderTools(true);
     loadCounts();
   } else {
@@ -270,8 +281,26 @@ $('switchBtn').addEventListener('click', async () => {
   location.href = '/login.html';
 });
 
-sb.auth.onAuthStateChange(() => refresh());
-refresh();
+document.getElementById('zgo').addEventListener('click', async () => {
+  const code = document.getElementById('zcode').value.trim()
+  const out = document.getElementById('zout')
+  if (!code) { out.textContent = 'Paste the code first.'; return }
+  out.textContent = 'Exchanging…'
+  try {
+    const { data:{ session } } = await sb.auth.getSession()
+    const r = await fetch(SUPABASE_URL + '/functions/v1/zoho-token-exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPABASE_ANON },
+      body: JSON.stringify({ code })
+    })
+    const d = await r.json()
+    if (d.error) { out.textContent = 'Error: ' + d.error + (d.zoho ? ' — ' + JSON.stringify(d.zoho) : ''); return }
+    out.innerHTML = `<div style="color:var(--green);margin-bottom:6px;">Contacts check: ${d.contacts_check}</div><div>Scope: ${d.scope || '—'}</div><div style="margin-top:8px;color:var(--text);">ZOHO_REFRESH_TOKEN:</div><div style="user-select:all;color:var(--orange);">${d.refresh_token}</div>`
+  } catch (e) { out.textContent = 'Failed: ' + e.message }
+})
+
+sb.auth.onAuthStateChange(() => refresh())
+refresh()
 </script>
 </body>
 </html>
