@@ -168,6 +168,7 @@ async function loadEvents() {
   const { data: vehicles } = await sbClient.from('vehicles')
     .select('id, registration, make, model, mot_expiry, service_due')
     .eq('customer_id', customerId)
+    .is('removed_at', null)
 
   for (const v of (vehicles || [])) {
     const label = [v.make, v.model, v.registration].filter(Boolean).join(' ')

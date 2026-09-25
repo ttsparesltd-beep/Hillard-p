@@ -1934,7 +1934,7 @@ window.openCustomerDetail = async function(id) {
 function renderVehicles() {
   document.getElementById('veh-tbody').innerHTML = allVehicles.length ? allVehicles.map(v => `
     <tr>
-      <td>${regBadge(v.registration)}</td>
+      <td>${regBadge(v.registration)}${v.removed_at ? ` <span class="tf-btn" style="cursor:default;font-size:10px;padding:2px 7px;margin-left:6px;" title="Removed from the customer's garage ${fmt(v.removed_at)} — record, invoices and history kept">removed</span>` : ''}</td>
       <td>${v.customers ? custName(v.customers) : '—'}</td>
       <td>${v.make||''} ${v.model||''}</td>
       <td>${v.year||'—'}</td>

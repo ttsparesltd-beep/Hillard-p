@@ -145,7 +145,7 @@ async function init() {
   document.getElementById('input-last').value = customer.last_name || ''
 
 
-  const { count } = await sbClient.from('vehicles').select('*', {count:'exact',head:true}).eq('customer_id', customer.id)
+  const { count } = await sbClient.from('vehicles').select('*', {count:'exact',head:true}).eq('customer_id', customer.id).is('removed_at', null)
   document.getElementById('info-vehicles').textContent = count || 0
 }
 

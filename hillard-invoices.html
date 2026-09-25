@@ -157,6 +157,7 @@ async function init() {
   const { data: vehicles } = await sbClient.from('vehicles')
     .select('id, registration, make, model')
     .eq('customer_id', customer.id)
+    .is('removed_at', null)
   allVehicles = vehicles || []
   buildPlateFilter()
 

@@ -259,6 +259,7 @@ async function loadVehicles() {
   const { data: vehicles } = await sbClient
     .from('vehicles').select('*')
     .eq('customer_id', currentCustomer.id)
+    .is('removed_at', null)
     .order('created_at', { ascending: false })
 
   const list = document.getElementById('vehicles-list')
@@ -705,16 +706,31 @@ window.addVehicle = async function() {
   btn.textContent = 'Adding...'
   btn.disabled = true
 
-  const { error } = await sbClient.from('vehicles').insert({
-    customer_id: currentCustomer.id,
-    registration: pendingVehicle.registration,
+  const details = {
     make: pendingVehicle.make,
     model: pendingVehicle.model,
     colour: pendingVehicle.colour,
     year: pendingVehicle.year,
     fuel_type: pendingVehicle.fuel_type,
     mot_expiry: pendingVehicle.mot_expiry || null
-  })
+  }
+
+  // Had this car before and removed it? Bring it back with its history.
+  const regNorm = String(pendingVehicle.registration || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  const { data: mine } = await sbClient.from('vehicles').select('id, registration, removed_at').eq('customer_id', currentCustomer.id)
+  const previous = (mine || []).find(v => String(v.registration || '').toUpperCase().replace(/[^A-Z0-9]/g, '') === regNorm)
+
+  let error = null
+  if (previous && previous.removed_at) {
+    ;({ error } = await sbClient.from('vehicles').update({ ...details, removed_at: null }).eq('id', previous.id))
+  } else if (previous) {
+    showToast(previous.registration + ' is already in your garage')
+    btn.textContent = 'Add This Vehicle to My Garage'
+    btn.disabled = false
+    return
+  } else {
+    ;({ error } = await sbClient.from('vehicles').insert({ customer_id: currentCustomer.id, registration: pendingVehicle.registration, ...details }))
+  }
 
   if (error) {
     showToast('Error adding vehicle — please try again')
@@ -726,7 +742,7 @@ window.addVehicle = async function() {
   btn.textContent = 'Add This Vehicle to My Garage'
   btn.disabled = false
   closeModal()
-  showToast('Vehicle added to your garage! 🎉')
+  showToast(previous ? 'Welcome back — history and invoices are still here' : 'Vehicle added to your garage! 🎉')
   await loadVehicles()
 }
 
@@ -799,9 +815,11 @@ window.clearServiceDate = async function(vehicleId) {
 }
 
 window.deleteVehicle = async function(vehicleId, reg) {
+  // Hide rather than delete: invoices and service history stay attached to
+  // the car, and adding the same reg again brings it all back.
   const { error } = await sbClient
     .from('vehicles')
-    .delete()
+    .update({ removed_at: new Date().toISOString() })
     .eq('id', vehicleId)
 
   if (error) {

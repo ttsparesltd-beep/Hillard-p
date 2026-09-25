@@ -183,6 +183,7 @@ async function init() {
   const { data: vehicles } = await sbClient
     .from('vehicles').select('*')
     .eq('customer_id', currentCustomer.id)
+    .is('removed_at', null)
 
   const sel = document.getElementById('vehicle-select')
   if (!vehicles || vehicles.length === 0) {
