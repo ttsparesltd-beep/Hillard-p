@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/services",
+      "destination": "/hillard-services.html"
+    },
+    {
       "source": "/admin",
       "destination": "/hillard-admin1.html"
     },

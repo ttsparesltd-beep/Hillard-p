@@ -251,6 +251,20 @@ async function init() {
   if (!vehicles || vehicles.length === 0) { window.location.href = '/index.html'; return }
   currentVehicle = vehicleId ? (vehicles.find(v => v.id === vehicleId) || vehicles[0]) : vehicles[0]
 
+  // Arrived from the services page: preselect the job type and describe the job.
+  const wantType = params.get('type')
+  const wantJob = params.get('job')
+  if (wantType) {
+    const sel = document.getElementById('repair-type')
+    const opt = [...sel.options].find(o => o.text.trim().toLowerCase() === wantType.trim().toLowerCase())
+    if (opt) sel.value = opt.value || opt.text
+  }
+  if (wantJob) {
+    const d = document.getElementById('description')
+    if (d && !d.value) d.value = wantJob
+  }
+  try { if (wantType) localStorage.removeItem('hp_pending_booking') } catch (e) {}
+
   document.getElementById('chip-reg').textContent = currentVehicle.registration
   document.getElementById('chip-name').textContent = [currentVehicle.make, currentVehicle.model].filter(Boolean).join(' ') || 'Vehicle'
   document.getElementById('chip-detail').textContent = [currentVehicle.colour, currentVehicle.year].filter(Boolean).join(' · ')
@@ -287,6 +301,20 @@ async function loadCalendar() {
   } catch(e) {
     markWeekendsAsBusy()
   }
+
+  // One job a day: days with an active booking in the portal, or blocked
+  // out in admin, are unavailable regardless of what Google Calendar says.
+  try {
+    const from = `${calYear}-${String(calMonth+1).padStart(2,'0')}-01`
+    const last = new Date(calYear, calMonth + 1, 0).getDate()
+    const to = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(last).padStart(2,'0')}`
+    const { data: taken, error } = await sbClient.rpc('unavailable_dates', { p_from: from, p_to: to })
+    if (!error && Array.isArray(taken)) {
+      for (const t of taken) if (t.day && !busyDates.includes(t.day)) busyDates.push(t.day)
+    } else if (error) {
+      console.warn('unavailable_dates:', error.message)
+    }
+  } catch(e) { console.warn('unavailable_dates failed', e) }
 
   renderCalendar()
   document.getElementById('cal-loading').style.display = 'none'
@@ -423,7 +451,9 @@ window.submitBooking = async function() {
   }).select().single()
 
   if (error) {
-    showToast('Something went wrong — please try again')
+    const taken = /DATE_TAKEN|DATE_BLOCKED/.test(error.message || '') || error.code === '23505'
+    showToast(taken ? 'That day has just been taken — please pick another' : 'Something went wrong — please try again')
+    if (taken) { selectedDate = null; document.getElementById('selected-msg').textContent = ''; await loadCalendar() }
     btn.disabled = false
     btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Send Booking Request'
     return
