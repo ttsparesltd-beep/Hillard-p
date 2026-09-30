@@ -152,6 +152,42 @@
     line-height:1;padding:4px 8px;border-radius:6px;
   }
   .del-row:hover{background:#f3d6d2;}
+  /* ---------- Service check sheet ---------- */
+  .svc-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#ece7da;border-bottom:1px solid var(--line);}
+  .svc-toggle .lab{margin:0;}
+  .svc-toggle small{display:block;color:var(--ink-soft);font-size:12px;margin-top:2px;font-family:'Archivo';letter-spacing:0;text-transform:none;font-weight:400;}
+  .sw{position:relative;width:46px;height:26px;flex:none;}
+  .sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;width:100%;height:100%;}
+  .sw span{position:absolute;inset:0;border-radius:13px;background:#cdc7ba;transition:background .15s;}
+  .sw span::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s;}
+  .sw input:checked + span{background:var(--good);}
+  .sw input:checked + span::after{transform:translateX(20px);}
+  .svc-panel{border-bottom:1px solid var(--line);}
+  .svc-panel[hidden]{display:none;}
+  .svc-group{border-bottom:1px solid var(--line);}
+  .svc-group:last-child{border-bottom:none;}
+  .svc-group-h{padding:9px 16px;background:#f1ede2;font-family:'Archivo';font-weight:700;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);display:flex;justify-content:space-between;}
+  .svc-group-h b{color:var(--ink);letter-spacing:0;text-transform:none;font-size:11px;}
+  .svc-item{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:7px 16px;border-top:1px solid #e6e0d3;}
+  .svc-item:first-of-type{border-top:none;}
+  .svc-name{font-family:'Archivo';font-size:13.5px;color:var(--ink);}
+  .rag{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+  .rag button{border:none;background:#fff;width:40px;height:30px;cursor:pointer;font-family:'Archivo';font-weight:700;font-size:12px;color:#9a9385;border-right:1px solid var(--line);}
+  .rag button:last-child{border-right:none;}
+  .rag button.g.on{background:var(--good);color:#fff;}
+  .rag button.a.on{background:#e8a317;color:#fff;}
+  .rag button.r.on{background:var(--bad);color:#fff;}
+  .svc-note{grid-column:1 / -1;}
+  .svc-note input{font-size:13px;padding:4px 0;border-bottom:1px dashed var(--line);}
+  .svc-note[hidden]{display:none;}
+  .svc-foot{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);background:#f1ede2;}
+  .svc-foot .cell{padding:10px 16px;}
+  .svc-foot .v{font-family:'Space Mono',monospace;font-size:15px;color:var(--ink);}
+  .svc-sum{padding:8px 16px;font-family:'Archivo';font-size:12px;color:var(--ink-soft);background:#f1ede2;border-top:1px solid var(--line);display:flex;gap:14px;flex-wrap:wrap;}
+  .svc-sum b{color:var(--ink);}
+  .svc-sum .a{color:#b97a05;} .svc-sum .r{color:var(--bad);}
+  @media(max-width:600px){ .svc-foot{grid-template-columns:1fr;} .rag button{width:44px;height:34px;} }
+
   .add-row{
     width:100%;border:none;background:#ece7da;color:var(--steel);cursor:pointer;
     font-family:'Archivo';font-weight:700;font-size:12px;letter-spacing:1px;
@@ -278,7 +314,7 @@
 
       <div class="grid">
         <div class="row two">
-          <div class="cell"><span class="lab">Received</span><input type="date" id="received"></div>
+          <div class="cell"><span class="lab">Received</span><input type="date" id="received" onchange="updateSvcSummary()"></div>
           <div class="cell"><span class="lab">Required</span><input type="date" id="required"></div>
         </div>
 
@@ -305,7 +341,7 @@
 
         <div class="row two">
           <div class="cell"><span class="lab">Reg</span><input id="reg" placeholder="AB12 CDE" style="text-transform:uppercase;"></div>
-          <div class="cell"><span class="lab">Miles</span><input id="miles" placeholder="Mileage"></div>
+          <div class="cell"><span class="lab">Miles</span><input id="miles" placeholder="Mileage" oninput="updateSvcSummary()"></div>
         </div>
         <div class="row two">
           <div class="cell"><span class="lab">Labour rate (£/hr)</span><input id="labourRate" type="number" step="0.5" min="0" placeholder="e.g. 60" oninput="recalc()"></div>
@@ -318,6 +354,23 @@
         </div>
         <div id="jobRows"></div>
         <button class="add-row" onclick="addJobRow()">＋ Add job line</button>
+
+        <!-- Service check sheet -->
+        <div class="svc-toggle">
+          <div>
+            <span class="lab">Service check sheet</span>
+            <small>Traffic-light health check. Goes to the customer's garage with the invoice and sets the next service due.</small>
+          </div>
+          <label class="sw"><input type="checkbox" id="svcOn" onchange="toggleSvc()"><span></span></label>
+        </div>
+        <div class="svc-panel" id="svcPanel" hidden>
+          <div id="svcGroups"></div>
+          <div class="svc-sum" id="svcSum"></div>
+          <div class="svc-foot">
+            <div class="cell"><span class="lab">Next service due</span><div class="v" id="svcDue">—</div></div>
+            <div class="cell"><span class="lab">Or at</span><div class="v" id="svcDueMiles">—</div></div>
+          </div>
+        </div>
 
         <!-- Totals -->
         <div class="totals">
@@ -475,7 +528,98 @@ function recalc(){
 function money(n){return '£'+n.toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
 /* ---------------------------------------------------------------- */
-/*  GATHER / FILL FORM                                               */
+/*  SERVICE CHECK SHEET                                              */
+/*  Traffic light per item, optional note. Stored on the sheet as    */
+/*  service_checks (jsonb); the invoice sync copies it to the car's  */
+/*  history and sets service_due.                                    */
+/* ---------------------------------------------------------------- */
+const SERVICE_INTERVAL = { months: 12, miles: 10000 };
+const SVC_TEMPLATE = [
+  { g:'Tyres', items:[ ['tyre_fl','Front left'], ['tyre_fr','Front right'], ['tyre_rl','Rear left'], ['tyre_rr','Rear right'], ['tyre_spare','Spare / repair kit'] ] },
+  { g:'Brakes', items:[ ['pads_f','Front pads'], ['pads_r','Rear pads'], ['discs_f','Front discs'], ['discs_r','Rear discs'], ['handbrake','Handbrake'], ['brake_fluid','Brake fluid'], ['brake_pipes','Brake pipes & hoses'] ] },
+  { g:'Under bonnet', items:[ ['oil','Engine oil & filter'], ['coolant','Coolant level & condition'], ['screenwash','Screenwash'], ['battery','Battery & terminals'], ['belts','Aux belt & hoses'], ['air_filter','Air filter'], ['pollen','Pollen filter'], ['plugs','Spark plugs'], ['leaks_top','Leaks (top)'] ] },
+  { g:'Lights & visibility', items:[ ['lights','Headlights & sidelights'], ['signals','Indicators & brake lights'], ['wipers','Wipers & washers'], ['horn','Horn'], ['glass','Glass & mirrors'] ] },
+  { g:'Underside', items:[ ['exhaust','Exhaust & mounts'], ['steering','Steering & track rod ends'], ['suspension','Suspension & bushes'], ['cv','Driveshafts & CV boots'], ['leaks_under','Leaks (underneath)'] ] },
+  { g:'Finish', items:[ ['reset','Service light reset'], ['stamp','Book stamped / record updated'] ] },
+];
+let svcState = {};   // key -> { s:'g'|'a'|'r', n:'' }
+
+function toggleSvc(){
+  const on=document.getElementById('svcOn').checked;
+  document.getElementById('svcPanel').hidden=!on;
+  if(on && !document.getElementById('svcGroups').children.length) renderSvc();
+  updateSvcSummary();
+}
+function renderSvc(){
+  const wrap=document.getElementById('svcGroups');
+  wrap.innerHTML=SVC_TEMPLATE.map(gr=>`
+    <div class="svc-group">
+      <div class="svc-group-h"><span>${gr.g}</span><b><button type="button" onclick="svcAllGood('${gr.g}')" style="border:none;background:none;color:var(--good);font:inherit;cursor:pointer;">All OK</button></b></div>
+      ${gr.items.map(([k,label])=>{
+        const st=svcState[k]||{};
+        return `<div class="svc-item" data-key="${k}" data-group="${gr.g}">
+          <span class="svc-name">${label}</span>
+          <span class="rag">
+            <button type="button" class="g ${st.s==='g'?'on':''}" onclick="svcSet('${k}','g')" title="OK">OK</button>
+            <button type="button" class="a ${st.s==='a'?'on':''}" onclick="svcSet('${k}','a')" title="Advisory">ADV</button>
+            <button type="button" class="r ${st.s==='r'?'on':''}" onclick="svcSet('${k}','r')" title="Urgent">URG</button>
+          </span>
+          <div class="svc-note" ${st.s==='a'||st.s==='r'?'':'hidden'}><input placeholder="Note for the customer, e.g. 3mm, replace within 3k" value="${esc(st.n)}" oninput="svcNote('${k}',this.value)"></div>
+        </div>`;}).join('')}
+    </div>`).join('');
+  updateSvcSummary();
+}
+function svcSet(k,val){
+  svcState[k]=Object.assign({},svcState[k]||{},{s:val});
+  const row=document.querySelector(`.svc-item[data-key="${k}"]`);
+  if(row){
+    row.querySelectorAll('.rag button').forEach(b=>b.classList.toggle('on',b.classList.contains(val)));
+    const note=row.querySelector('.svc-note');
+    note.hidden=!(val==='a'||val==='r');
+    if(!note.hidden) note.querySelector('input').focus();
+  }
+  updateSvcSummary();
+}
+function svcNote(k,v){ svcState[k]=Object.assign({},svcState[k]||{},{n:v}); }
+function svcAllGood(group){
+  const gr=SVC_TEMPLATE.find(x=>x.g===group); if(!gr) return;
+  gr.items.forEach(([k])=>{ if(!svcState[k]||!svcState[k].s) svcSet(k,'g'); });
+}
+function svcLabel(k){ for(const gr of SVC_TEMPLATE){ const it=gr.items.find(i=>i[0]===k); if(it) return it[1]; } return k; }
+function svcNextDue(){
+  const miles=parseInt(String(val('miles')).replace(/[^0-9]/g,''),10);
+  const base=val('received')?new Date(val('received')):new Date();
+  const due=new Date(base); due.setMonth(due.getMonth()+SERVICE_INTERVAL.months);
+  return { date:due.toISOString().slice(0,10), miles: miles>0 ? miles+SERVICE_INTERVAL.miles : null };
+}
+function updateSvcSummary(){
+  if(!document.getElementById('svcOn').checked) return;
+  const vals=Object.values(svcState);
+  const total=SVC_TEMPLATE.reduce((a,g)=>a+g.items.length,0);
+  const done=vals.filter(v=>v.s).length, adv=vals.filter(v=>v.s==='a').length, urg=vals.filter(v=>v.s==='r').length;
+  document.getElementById('svcSum').innerHTML=`<span><b>${done}</b> of ${total} checked</span><span class="a"><b>${adv}</b> advisory</span><span class="r"><b>${urg}</b> urgent</span>${done<total?`<span>${total-done} still to do</span>`:'<span style="color:var(--good)">Sheet complete</span>'}`;
+  const nd=svcNextDue();
+  document.getElementById('svcDue').textContent=new Date(nd.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('svcDueMiles').textContent=nd.miles?nd.miles.toLocaleString('en-GB')+' miles':'add mileage above';
+}
+function collectSvc(){
+  if(!document.getElementById('svcOn').checked) return null;
+  const items={};
+  for(const [k,v] of Object.entries(svcState)) if(v.s) items[k]={s:v.s, n:(v.n||'').trim()||undefined, l:svcLabel(k)};
+  const nd=svcNextDue();
+  return { version:1, interval:SERVICE_INTERVAL, items, next_due:nd, advisories:Object.values(items).filter(i=>i.s!=='g').map(i=>i.l+(i.n?' — '+i.n:'')) };
+}
+function fillSvc(d){
+  svcState={};
+  const sc=d&&d.service_checks;
+  if(sc&&sc.items) for(const [k,v] of Object.entries(sc.items)) svcState[k]={s:v.s,n:v.n||''};
+  const on=!!sc;
+  document.getElementById('svcOn').checked=on;
+  document.getElementById('svcPanel').hidden=!on;
+  document.getElementById('svcGroups').innerHTML='';
+  if(on) renderSvc();
+}
+
 /* ---------------------------------------------------------------- */
 function collect(){
   const jobs=[...document.querySelectorAll('.job-row')].map(r=>({
@@ -504,6 +648,7 @@ function collect(){
     tech_report: val('report'),
     status: val('status'),
     labour_rate: rateVal>0?rateVal:null,
+    service_checks: collectSvc(),
     subtotal: round(sub),
     vat: round(vat),
     total: round(sub+vat)
@@ -514,6 +659,7 @@ function fill(d){
   set('customer',d.customer); set('reg',d.reg); set('miles',d.miles);
   set('report',d.tech_report); set('status',d.status||'open');
   set('labourRate', d.labour_rate ?? '');
+  fillSvc(d);
   showInvoiceState(d);
   const c=d.contacts||[];
   set('c1name',c[0]?.name); set('c1phone',c[0]?.phone);
@@ -537,6 +683,7 @@ function newSheet(){
   addJobRow();addJobRow();addJobRow();
   set('received', new Date().toISOString().slice(0,10));
   set('labourRate', LABOUR_RATE_DEFAULT);
+  fillSvc({});
   showInvoiceState({});
   document.getElementById('docNo').textContent='NEW SHEET';
   document.getElementById('docDate').textContent=new Date().toLocaleDateString('en-GB');
@@ -617,7 +764,7 @@ function renderList(){
       <div>
         <div class="who">${escHtml(r.customer||'—')}</div>
         <div class="meta">${escHtml(r.reg||'no reg')} · ${(r.jobs||[]).length} job(s) · ${new Date(r.created_at).toLocaleDateString('en-GB')}</div>
-        <span class="pill ${r.status||'open'}">${({open:'Booked',progress:'In Progress',done:'Done',invoiced:'Invoiced'})[r.status||'open']||r.status}</span>${r.zoho_invoice_number?` <span class="pill done">${escHtml(r.zoho_invoice_number)}</span>`:''}
+        <span class="pill ${r.status||'open'}">${({open:'Booked',progress:'In Progress',done:'Done',invoiced:'Invoiced'})[r.status||'open']||r.status}</span>${r.zoho_invoice_number?` <span class="pill done">${escHtml(r.zoho_invoice_number)}</span>`:''}${r.service_checks?` <span class="pill progress">✓ check sheet</span>`:''}
       </div>
       <div class="right"><div class="price">${money(r.total||0)}</div></div>
     </div>`).join('');

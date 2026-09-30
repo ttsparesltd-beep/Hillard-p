@@ -67,6 +67,13 @@ body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(
 .tl-card.expanded .tl-detail{max-height:500px;}
 .tl-detail-inner{border-top:1px solid var(--border);padding:14px 16px;font-size:13px;color:var(--text2);line-height:1.6;}
 .tl-field{margin-bottom:8px;}
+.rag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:6px 0 10px;}
+.rag-cell{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 9px;}
+.rag-dot{width:10px;height:10px;border-radius:50%;flex:none;}
+.rag-g{background:#22c55e;} .rag-a{background:#f59e0b;} .rag-r{background:#e8291c;}
+.rag-cell.warn{border-color:rgba(245,158,11,0.4);} .rag-cell.bad{border-color:rgba(232,41,28,0.45);color:var(--text);}
+.rag-key{display:flex;gap:12px;font-size:11px;color:var(--muted);margin-bottom:6px;}
+.rag-key span{display:inline-flex;align-items:center;gap:5px;}
 .tl-field strong{color:var(--muted);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;display:block;margin-bottom:2px;font-weight:500;}
 .tl-actions{display:flex;gap:8px;margin-top:10px;}
 .act-btn{flex:1;padding:10px;border-radius:9px;font-family:"Rajdhani",sans-serif;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);}
@@ -288,6 +295,19 @@ function renderTimeline(history, invoices, opts) {
   timeline.innerHTML = items.map(it => it.kind === 'history' ? historyCard(it.h, opts) : invoiceCard(it.i, opts)).join('')
 }
 
+// Traffic-light health check from the job sheet, worst items first.
+function checksGrid(c) {
+  const order = { r: 0, a: 1, g: 2 }
+  const items = Object.entries(c.items || {}).map(([k, v]) => ({ k, s: v.s, n: v.n, l: v.l || k })).sort((x, y) => (order[x.s] ?? 3) - (order[y.s] ?? 3))
+  if (!items.length) return ''
+  const due = c.next_due ? [c.next_due.date ? formatDate(c.next_due.date) : null, c.next_due.miles ? Number(c.next_due.miles).toLocaleString('en-GB') + ' mi' : null].filter(Boolean).join(' or ') : ''
+  return `<div class="tl-field"><strong>Health check</strong>
+    <div class="rag-key"><span><i class="rag-dot rag-g"></i>OK</span><span><i class="rag-dot rag-a"></i>Advisory</span><span><i class="rag-dot rag-r"></i>Urgent</span></div>
+    <div class="rag-grid">${items.map(i => `<div class="rag-cell ${i.s === 'a' ? 'warn' : i.s === 'r' ? 'bad' : ''}"><i class="rag-dot rag-${esc(i.s)}"></i><span>${esc(i.l)}${i.n ? ` <span style="color:var(--muted)">· ${esc(i.n)}</span>` : ''}</span></div>`).join('')}</div>
+    ${due ? `<div style="font-size:12px;color:var(--muted);">Next service due ${esc(due)}</div>` : ''}
+  </div>`
+}
+
 function historyCard(h, opts) {
   const dotClass = dotColors[h.job_type] || 'tl-dot-green'
   const reg = opts.showReg ? (h.vehicles?.registration || '') : ''
@@ -314,7 +334,8 @@ function historyCard(h, opts) {
         ${h.garage_name ? `<div class="tl-field"><strong>Garage</strong>${esc(h.garage_name)}</div>` : ''}
         ${h.technician ? `<div class="tl-field"><strong>Technician</strong>${esc(h.technician)}</div>` : ''}
         ${h.mot_result ? `<div class="tl-field"><strong>MOT Result</strong>${esc(h.mot_result.toUpperCase())}</div>` : ''}
-        ${h.advisories?.length ? `<div class="tl-field"><strong>Advisories</strong>${esc(h.advisories.join(', '))}</div>` : ''}
+        ${h.checks?.items ? checksGrid(h.checks) : ''}
+        ${h.advisories?.length ? `<div class="tl-field"><strong>Advisories</strong>${h.advisories.map(a => `<div>• ${esc(a)}</div>`).join('')}</div>` : ''}
         ${inv ? `<div class="tl-field"><strong>Invoice</strong>${money(inv.total)} · ${inv.status === 'paid' ? 'Paid' : 'Outstanding'}</div>` : ''}
         ${!h.description && !h.garage_name && !h.technician && !h.mot_result && !inv ? `<div style="color:var(--muted);">No further details recorded.</div>` : ''}
       </div></div>
