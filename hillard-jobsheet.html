@@ -75,6 +75,7 @@
   }
   .tab:hover{color:#fff;border-color:#3c4busy;}
   .tab.active{background:var(--amber);color:#1a1205;border-color:var(--amber);}
+  a.tab.link{text-decoration:none;display:inline-flex;align-items:center;}
 
   /* ---------- Config banner ---------- */
   .banner{
@@ -308,6 +309,8 @@
   <div class="tabs">
     <button class="tab active" data-view="newView" onclick="switchView('newView',this)">＋ New Sheet</button>
     <button class="tab" data-view="savedView" onclick="switchView('savedView',this);loadList()">☰ Saved Sheets</button>
+    <a class="tab link" href="/hillard-yard.html">Yard</a>
+    <a class="tab link" href="/hillard-admin1.html">⚙ Admin</a>
   </div>
 </div>
 
@@ -804,13 +807,9 @@ function renderList(){
   if(listBucket==='invoiced'){
     rows.sort((a,b)=>(b.invoiced_at||b.created_at||'').localeCompare(a.invoiced_at||a.created_at||''));
   }else{
-    // required date ascending, sheets with no date go to the bottom (newest first)
-    rows.sort((a,b)=>{
-      if(a.required_date&&b.required_date) return a.required_date.localeCompare(b.required_date);
-      if(a.required_date) return -1;
-      if(b.required_date) return 1;
-      return (b.created_at||'').localeCompare(a.created_at||'');
-    });
+    // most recently arrived first (received date, falling back to when the sheet was made)
+    const arrived=r=>r.received_date||(r.created_at||'').slice(0,10);
+    rows.sort((a,b)=>arrived(b).localeCompare(arrived(a))||(b.created_at||'').localeCompare(a.created_at||''));
   }
   if(!rows.length){
     box.innerHTML='<div class="empty">'+(q?'No job sheets match your search':(listBucket==='invoiced'?'Nothing invoiced yet':'No jobs ahead — create one!'))+'</div>';
@@ -820,7 +819,7 @@ function renderList(){
     <div class="card ${isInvoiced(r)?'inv':''}" onclick='openSheet(${JSON.stringify(r.id)})'>
       <div>
         <div class="who">${escHtml(r.customer||'—')}</div>
-        <div class="meta">${escHtml(r.reg||'no reg')} · ${(r.jobs||[]).length} job(s) · in ${new Date(r.created_at).toLocaleDateString('en-GB')}</div>
+        <div class="meta">${escHtml(r.reg||'no reg')} · ${(r.jobs||[]).length} job(s) · in ${new Date(r.received_date?r.received_date+'T00:00:00':r.created_at).toLocaleDateString('en-GB')}</div>
         ${isInvoiced(r)?(r.invoiced_at?`<div class="due">invoiced ${new Date(r.invoiced_at).toLocaleDateString('en-GB')}</div>`:''):dueLabel(r)}
         <span class="pill ${isInvoiced(r)?'invoiced':(r.status||'open')}">${isInvoiced(r)?'Invoiced':(({open:'Booked',progress:'In Progress',done:'Done'})[r.status||'open']||r.status)}</span>${r.zoho_invoice_number?` <span class="pill done">${escHtml(r.zoho_invoice_number)}</span>`:''}${r.service_checks?` <span class="pill progress">✓ check sheet</span>`:''}
       </div>
