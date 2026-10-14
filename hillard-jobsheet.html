@@ -249,6 +249,20 @@
   .pill.done{background:#0f2418;color:#9bf0c0;}
   .pill.invoiced{background:#1a1f3a;color:#a5b4fc;}
   .empty{text-align:center;color:#6c7585;padding:60px 20px;font-family:'Space Mono';}
+  /* Open / Invoiced split */
+  .seg{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .seg button{
+    font-family:'Archivo';font-weight:700;font-size:13px;letter-spacing:.5px;
+    background:var(--bg-2);color:#aeb6c2;border:1px solid #2a313c;border-radius:20px;
+    padding:8px 16px;cursor:pointer;transition:.15s;
+  }
+  .seg button.active{background:var(--amber);color:#1a1205;border-color:var(--amber);}
+  .seg button .n{font-family:'Space Mono';font-weight:400;opacity:.75;margin-left:6px;}
+  .card.inv{border-left-color:#5b6ad6;opacity:.85;}
+  .card .due{font-family:'Space Mono';font-size:12px;color:#cfd5df;margin-top:4px;}
+  .card .due.late{color:#ff9f8f;}
+  .card .due.soon{color:#ffcf8f;}
+  .card .due.none{color:#6c7585;font-style:italic;}
 
   /* ---------- Toast ---------- */
   #toast{
@@ -409,6 +423,10 @@
 
   <!-- ===================== SAVED LIST ===================== -->
   <section id="savedView" class="view">
+    <div class="seg" id="listSeg">
+      <button class="active" data-bucket="open" onclick="setBucket('open',this)">Jobs ahead<span class="n" id="nOpen"></span></button>
+      <button data-bucket="invoiced" onclick="setBucket('invoiced',this)">Invoiced<span class="n" id="nInv"></span></button>
+    </div>
     <input class="search" id="search" placeholder="Search by customer, reg or phone…" oninput="renderList()">
     <div class="list" id="list"></div>
   </section>
@@ -751,20 +769,60 @@ async function loadList(){
   }
   renderList();
 }
+/* A sheet is "invoiced" once it has been pushed to Zoho (or marked so by hand).
+   Invoiced sheets leave the main list so the "Jobs ahead" view only shows work
+   still to do, soonest required date first. */
+let listBucket='open';
+function isInvoiced(r){ return r.status==='invoiced' || !!r.zoho_invoice_id; }
+function setBucket(b,el){
+  listBucket=b;
+  document.querySelectorAll('#listSeg button').forEach(x=>x.classList.toggle('active',x===el));
+  renderList();
+}
+function dueLabel(r){
+  if(!r.required_date) return '<div class="due none">no date set</div>';
+  const d=new Date(r.required_date+'T00:00:00');
+  const today=new Date(); today.setHours(0,0,0,0);
+  const days=Math.round((d-today)/86400000);
+  let cls='', tag='';
+  if(days<0){cls='late';tag=` · ${-days}d overdue`;}
+  else if(days===0){cls='soon';tag=' · today';}
+  else if(days<=3){cls='soon';tag=` · in ${days}d`;}
+  return `<div class="due ${cls}">📅 ${d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}${tag}</div>`;
+}
 function renderList(){
   const q=(document.getElementById('search').value||'').toLowerCase();
   const box=document.getElementById('list');
-  const rows=listData.filter(r=>{
-    const hay=[r.customer,r.reg,(r.contacts||[]).map(c=>c.phone).join(' ')].join(' ').toLowerCase();
+  const openAll=listData.filter(r=>!isInvoiced(r));
+  const invAll=listData.filter(isInvoiced);
+  document.getElementById('nOpen').textContent=openAll.length;
+  document.getElementById('nInv').textContent=invAll.length;
+  let rows=(listBucket==='invoiced'?invAll:openAll).filter(r=>{
+    const hay=[r.customer,r.reg,(r.contacts||[]).map(c=>c.phone).join(' '),r.zoho_invoice_number].join(' ').toLowerCase();
     return hay.includes(q);
   });
-  if(!rows.length){box.innerHTML='<div class="empty">No job sheets'+(q?' match your search':' yet — create one!')+'</div>';return;}
+  if(listBucket==='invoiced'){
+    rows.sort((a,b)=>(b.invoiced_at||b.created_at||'').localeCompare(a.invoiced_at||a.created_at||''));
+  }else{
+    // required date ascending, sheets with no date go to the bottom (newest first)
+    rows.sort((a,b)=>{
+      if(a.required_date&&b.required_date) return a.required_date.localeCompare(b.required_date);
+      if(a.required_date) return -1;
+      if(b.required_date) return 1;
+      return (b.created_at||'').localeCompare(a.created_at||'');
+    });
+  }
+  if(!rows.length){
+    box.innerHTML='<div class="empty">'+(q?'No job sheets match your search':(listBucket==='invoiced'?'Nothing invoiced yet':'No jobs ahead — create one!'))+'</div>';
+    return;
+  }
   box.innerHTML=rows.map(r=>`
-    <div class="card" onclick='openSheet(${JSON.stringify(r.id)})'>
+    <div class="card ${isInvoiced(r)?'inv':''}" onclick='openSheet(${JSON.stringify(r.id)})'>
       <div>
         <div class="who">${escHtml(r.customer||'—')}</div>
-        <div class="meta">${escHtml(r.reg||'no reg')} · ${(r.jobs||[]).length} job(s) · ${new Date(r.created_at).toLocaleDateString('en-GB')}</div>
-        <span class="pill ${r.status||'open'}">${({open:'Booked',progress:'In Progress',done:'Done',invoiced:'Invoiced'})[r.status||'open']||r.status}</span>${r.zoho_invoice_number?` <span class="pill done">${escHtml(r.zoho_invoice_number)}</span>`:''}${r.service_checks?` <span class="pill progress">✓ check sheet</span>`:''}
+        <div class="meta">${escHtml(r.reg||'no reg')} · ${(r.jobs||[]).length} job(s) · in ${new Date(r.created_at).toLocaleDateString('en-GB')}</div>
+        ${isInvoiced(r)?(r.invoiced_at?`<div class="due">invoiced ${new Date(r.invoiced_at).toLocaleDateString('en-GB')}</div>`:''):dueLabel(r)}
+        <span class="pill ${isInvoiced(r)?'invoiced':(r.status||'open')}">${isInvoiced(r)?'Invoiced':(({open:'Booked',progress:'In Progress',done:'Done'})[r.status||'open']||r.status)}</span>${r.zoho_invoice_number?` <span class="pill done">${escHtml(r.zoho_invoice_number)}</span>`:''}${r.service_checks?` <span class="pill progress">✓ check sheet</span>`:''}
       </div>
       <div class="right"><div class="price">${money(r.total||0)}</div></div>
     </div>`).join('');
@@ -876,9 +934,18 @@ function toast(msg,err){
 /*  BOOT                                                             */
 /* ---------------------------------------------------------------- */
 const escHtml=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-window.addEventListener('DOMContentLoaded',()=>{
-  initSupabase();
+window.addEventListener('DOMContentLoaded',async()=>{
+  await initSupabase();
   newSheet();
+  // Deep links from the Yard page: ?open=<sheet id> opens a sheet,
+  // ?reg=AB12CDE&customer=Name starts a new sheet with those filled in.
+  const p=new URLSearchParams(location.search);
+  if(p.get('open')&&configured){ openSheet(p.get('open')); }
+  else if(p.get('reg')){
+    set('reg',p.get('reg').toUpperCase());
+    if(p.get('customer'))set('customer',p.get('customer'));
+    if(p.get('miles'))set('miles',p.get('miles'));
+  }
 });
 </script>
 </body>

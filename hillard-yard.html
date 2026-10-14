@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yard — Hillard Performance</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#0d1117; --panel:#151b23; --panel-2:#1b232d; --line:#26303c;
+    --text:#e8edf3; --muted:#8b98a8; --orange:#ff6a1f; --green:#3ddc84;
+    --red:#ff5b5b; --amber:#ffb020; --blue:#5aa9ff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--ink);color:var(--text);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:0 0 90px}
+  .wrap{max-width:760px;margin:0 auto;padding:0 14px}
+  header{padding:18px 0 8px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+  .wordmark{font-weight:800;letter-spacing:-.02em;font-size:clamp(24px,7vw,34px);margin:0;line-height:1}
+  .wordmark span{color:var(--orange)}
+  .sub{color:var(--muted);margin:4px 0 0;font-size:13px}
+  a{color:var(--blue)}
+  .back{font-size:13px;color:var(--muted);text-decoration:none;white-space:nowrap}
+  .hide{display:none!important}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;margin:12px 0 10px;position:sticky;top:0;background:var(--ink);padding:8px 0;z-index:5}
+  .tabs button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    font-weight:700;font-size:14px;padding:11px 6px;border-radius:12px;cursor:pointer}
+  .tabs button.active{background:var(--orange);border-color:var(--orange);color:#1a0d04}
+  .tabs button .n{font-weight:400;opacity:.8;margin-left:4px}
+
+  /* add bar */
+  .addbar{display:flex;gap:8px;margin:8px 0 14px}
+  .addbar input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);color:#fff;
+    font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:12px 14px;border-radius:12px;outline:none}
+  .addbar input:focus{border-color:var(--orange)}
+  .btn{background:var(--orange);color:#1a0d04;border:0;border-radius:12px;font-weight:800;font-size:15px;
+    padding:12px 16px;cursor:pointer;white-space:nowrap}
+  .btn.ghost{background:var(--panel-2);color:var(--text);border:1px solid var(--line)}
+  .btn.green{background:var(--green);color:#042313}
+  .btn.red{background:rgba(255,91,91,.15);color:var(--red);border:1px solid rgba(255,91,91,.4)}
+  .btn.sm{padding:8px 12px;font-size:13px;border-radius:10px}
+  a.btn{text-decoration:none;display:inline-block}
+  .btn:disabled{opacity:.5}
+
+  /* cards */
+  .list{display:grid;gap:10px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .card.late{border-color:rgba(255,91,91,.5)}
+  .card.done{border-color:rgba(61,220,132,.4)}
+  .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .plate{display:inline-block;background:#f5d23c;color:#111;font-weight:800;letter-spacing:2px;
+    font-size:18px;padding:3px 10px;border-radius:6px;border:2px solid #111;font-family:"Helvetica Neue",Arial,sans-serif}
+  .car{font-weight:700;font-size:15px;flex:1;min-width:120px}
+  .car small{display:block;color:var(--muted);font-weight:400;font-size:13px}
+  .meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0;font-size:13px;color:var(--muted)}
+  .tag{display:inline-block;padding:3px 9px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--muted)}
+  .tag.amber{color:var(--amber);border-color:rgba(255,176,32,.5)}
+  .tag.red{color:var(--red);border-color:rgba(255,91,91,.5)}
+  .tag.green{color:var(--green);border-color:rgba(61,220,132,.5)}
+  .tag.blue{color:var(--blue);border-color:rgba(90,169,255,.5)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  select.status{background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    font-weight:700;font-size:14px;padding:9px 10px;border-radius:10px}
+  .grow{flex:1}
+  .check{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:700;cursor:pointer;user-select:none}
+  .check input{width:20px;height:20px;accent-color:var(--green)}
+  .section{margin:22px 0 8px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .empty{text-align:center;color:var(--muted);padding:34px 10px;font-size:14px;border:1px dashed var(--line);border-radius:14px}
+  .notice{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;margin:16px 0;font-size:14px;color:var(--muted)}
+  .notice b{color:var(--text)}
+
+  /* edit sheet */
+  .sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:20}
+  .sheet.on{display:flex}
+  .sheet .box{background:var(--panel);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:16px 16px 28px;max-height:92vh;overflow:auto}
+  .sheet h3{margin:0 0 12px;font-size:18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .grid .full{grid-column:1/-1}
+  .f label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:3px}
+  .f input,.f select,.f textarea{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-size:15px;padding:10px;border-radius:10px;outline:none}
+  .f input:focus,.f textarea:focus{border-color:var(--orange)}
+  .f textarea{min-height:64px;resize:vertical}
+  .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .msg{font-size:13px;color:var(--muted);margin-top:6px;min-height:18px}
+
+  /* walk mode */
+  .walkbar{position:sticky;top:60px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0 12px;display:flex;align-items:center;gap:10px;z-index:4}
+  .walkbar b{font-size:18px}
+  .walkbar .grow{font-size:13px;color:var(--muted)}
+  .walk .card{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .walk .card.seen{opacity:.5;border-color:rgba(61,220,132,.4)}
+  .walk .bigbtns{display:flex;gap:8px;width:100%}
+  .walk .bigbtns .btn{flex:1;padding:14px 8px;font-size:16px}
+  #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#fff;color:#111;font-weight:700;
+    padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:50;white-space:nowrap}
+  #toast.show{opacity:1}
+  #toast.bad{background:var(--red);color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1 class="wordmark">Yard<span>.</span></h1>
+      <p class="sub" id="who">Checking sign-in…</p>
+    </div>
+    <a class="back" href="/hillard-admin1.html">← Admin</a>
+  </header>
+
+  <div id="gate" class="notice hide">
+    <b>Staff only.</b> <span id="gateMsg">Sign in with a staff account to see the yard.</span>
+    <div class="actions"><a class="btn" href="/login.html">Sign in</a></div>
+  </div>
+
+  <div id="app" class="hide">
+    <div class="tabs">
+      <button class="active" data-tab="workshop" onclick="setTab('workshop',this)">Workshop<span class="n" id="nWork"></span></button>
+      <button data-tab="breakers" onclick="setTab('breakers',this)">Breakers<span class="n" id="nBreak"></span></button>
+      <button data-tab="walk" onclick="setTab('walk',this)">Walk the yard</button>
+    </div>
+
+    <!-- ============ WORKSHOP ============ -->
+    <div id="tab-workshop">
+      <form class="addbar" onsubmit="arrive(event)">
+        <input id="wReg" placeholder="REG" autocomplete="off" autocapitalize="characters" maxlength="8">
+        <button class="btn" type="submit">Car arrived</button>
+      </form>
+      <div class="msg" id="wMsg"></div>
+
+      <div class="section">On the yard — awaiting / in work</div>
+      <div class="list" id="workList"></div>
+
+      <div class="section">Booked in — not arrived yet</div>
+      <div class="list" id="aheadList"></div>
+    </div>
+
+    <!-- ============ BREAKERS ============ -->
+    <div id="tab-breakers" class="hide">
+      <form class="addbar" onsubmit="addBreaker(event)">
+        <input id="bReg" placeholder="REG" autocomplete="off" autocapitalize="characters" maxlength="8">
+        <button class="btn" type="submit">Add to stock</button>
+      </form>
+      <div class="msg" id="bMsg"></div>
+      <div class="list" id="breakList"></div>
+    </div>
+
+    <!-- ============ WALK ============ -->
+    <div id="tab-walk" class="hide walk">
+      <div class="walkbar">
+        <b id="walkCount">0 / 0</b>
+        <div class="grow" id="walkNote">Tap <b>Here</b> for every car you see. Anything left unticked at the end is missing.</div>
+        <button class="btn sm ghost" onclick="startWalk()">Start again</button>
+      </div>
+      <div class="list" id="walkList"></div>
+      <div class="actions" style="margin-top:16px">
+        <button class="btn green" onclick="finishWalk()">Finish walk</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- edit sheet -->
+<div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()">
+  <div class="box">
+    <h3 id="shTitle">Car</h3>
+    <div class="grid">
+      <div class="f"><label>Reg</label><input id="e_reg" style="text-transform:uppercase;font-weight:800;letter-spacing:2px"></div>
+      <div class="f"><label>&nbsp;</label><button class="btn ghost" style="width:100%" type="button" onclick="lookupInto()">Look up DVLA</button></div>
+      <div class="f"><label>Make</label><input id="e_make"></div>
+      <div class="f"><label>Model</label><input id="e_model"></div>
+      <div class="f"><label>Spec / variant</label><input id="e_variant" placeholder="e.g. TT 3.2 V6 quattro"></div>
+      <div class="f"><label>Engine</label><input id="e_engine" placeholder="e.g. BUB / BAM 225"></div>
+      <div class="f"><label>Year</label><input id="e_year" inputmode="numeric"></div>
+      <div class="f"><label>Mileage</label><input id="e_mileage" inputmode="numeric"></div>
+      <div class="f"><label>Colour</label><input id="e_colour"></div>
+      <div class="f" id="f_customer"><label>Customer</label><input id="e_customer"></div>
+      <div class="f full" id="f_condition"><label>Condition</label><input id="e_condition" placeholder="runner / non-runner, damage, what's missing"></div>
+      <div class="f full"><label>Notes</label><textarea id="e_notes"></textarea></div>
+    </div>
+    <div class="msg" id="eMsg"></div>
+    <div class="actions">
+      <button class="btn" onclick="saveSheet()">Save</button>
+      <button class="btn ghost" onclick="closeSheet()">Cancel</button>
+      <span class="grow"></span>
+      <button class="btn red sm" id="eDelete" onclick="deleteCar()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL  = 'https://ixgotsabbqkkxzsxnwtr.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4Z290c2FiYnFra3h6c3hud3RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTQwOTEsImV4cCI6MjA4Nzg3MDA5MX0.NNH_JEmEEvaMYuM_2F9F4qLqOFXoKb68NM-Ac3PDXyA';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const normReg = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const prettyReg = s => { const r = normReg(s); return /^[A-Z]{2}[0-9]{2}[A-Z]{3}$/.test(r) ? r.slice(0,4)+' '+r.slice(4) : r; };
+const fmtDate = d => d ? new Date(d.length === 10 ? d + 'T00:00:00' : d).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : '';
+const daysSince = d => Math.floor((Date.now() - new Date(d.length === 10 ? d + 'T00:00:00' : d)) / 86400000);
+
+const WORK_STATUS  = { waiting:'Waiting', on_ramp:'On ramp', done:'Done — awaiting collection' };
+const BREAK_STATUS = { arrived:'Arrived', stripping:'Stripping', shell_gone:'Shell gone' };
+
+let me = null;          // staff email
+let cars = [];          // active yard_cars
+let sheets = [];        // non-invoiced job sheets
+let tab = 'workshop';
+let editing = null;     // car row being edited, or {list} for a new one
+let walkSeen = new Set();
+
+function toast(m, bad){ const t=$('toast'); t.textContent=m; t.className='show'+(bad?' bad':''); setTimeout(()=>t.className='', 2600); }
+
+/* ---------------- auth gate ---------------- */
+async function init(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session){ $('who').textContent='Signed out'; $('gate').classList.remove('hide'); return; }
+  const { data:isAdmin } = await sb.rpc('is_admin');
+  if (isAdmin !== true){
+    $('who').textContent = session.user.email;
+    $('gateMsg').textContent = 'This login is not on the staff list.';
+    $('gate').classList.remove('hide'); return;
+  }
+  me = session.user.email;
+  $('who').textContent = me;
+  $('app').classList.remove('hide');
+  const p = new URLSearchParams(location.search);
+  if (p.get('tab')) setTab(p.get('tab'), document.querySelector(`.tabs [data-tab="${p.get('tab')}"]`));
+  await refresh();
+}
+
+async function refresh(){
+  const [a, b] = await Promise.all([
+    sb.from('yard_cars').select('*').is('left_at', null).order('arrived_on'),
+    sb.from('job_sheets').select('id,reg,customer,miles,required_date,received_date,status,zoho_invoice_id,created_at,jobs')
+      .is('zoho_invoice_id', null).neq('status', 'invoiced').order('created_at', {ascending:false})
+  ]);
+  if (a.error) toast('Load failed: ' + a.error.message, true);
+  cars = a.data || [];
+  sheets = b.data || [];
+  render();
+}
+
+/* Match a yard car to its job sheet: by id if linked, else newest open sheet with the same reg. */
+function sheetFor(car){
+  if (car.job_sheet_id){ const s = sheets.find(x => x.id === car.job_sheet_id); if (s) return s; }
+  const r = normReg(car.reg);
+  return sheets.find(s => normReg(s.reg) === r) || null;
+}
+
+function setTab(t, el){
+  tab = t;
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b === el));
+  ['workshop','breakers','walk'].forEach(x => $('tab-'+x).classList.toggle('hide', x !== t));
+  if (t === 'walk') renderWalk();
+}
+
+function render(){
+  const work = cars.filter(c => c.list === 'workshop');
+  const brk  = cars.filter(c => c.list === 'breakers');
+  $('nWork').textContent = work.length ? `(${work.length})` : '';
+  $('nBreak').textContent = brk.length ? `(${brk.length})` : '';
+  renderWork(work);
+  renderAhead(work);
+  renderBreak(brk);
+  if (tab === 'walk') renderWalk();
+}
+
+/* ---------------- WORKSHOP ---------------- */
+function dueTag(s){
+  if (!s) return '<span class="tag amber">no job sheet</span>';
+  if (!s.required_date) return '<span class="tag amber">no date</span>';
+  const d = -daysSince(s.required_date);
+  if (d < 0)  return `<span class="tag red">due ${fmtDate(s.required_date)} · ${-d}d late</span>`;
+  if (d === 0) return `<span class="tag red">due today</span>`;
+  if (d <= 3) return `<span class="tag amber">due ${fmtDate(s.required_date)}</span>`;
+  return `<span class="tag blue">due ${fmtDate(s.required_date)}</span>`;
+}
+function sortByDue(list, getSheet){
+  return list.slice().sort((a, b) => {
+    const sa = getSheet(a), sb_ = getSheet(b);
+    const da = sa?.required_date, db = sb_?.required_date;
+    if (da && db) return da.localeCompare(db);
+    if (da) return -1; if (db) return 1;
+    return (a.arrived_on || a.created_at || '').localeCompare(b.arrived_on || b.created_at || '');
+  });
+}
+function renderWork(work){
+  const box = $('workList');
+  if (!work.length){ box.innerHTML = '<div class="empty">Nothing on the yard. Type a reg above when a car arrives.</div>'; return; }
+  box.innerHTML = sortByDue(work, sheetFor).map(c => {
+    const s = sheetFor(c);
+    const late = s?.required_date && daysSince(s.required_date) > 0 && c.status !== 'done';
+    const jobs = s ? (s.jobs || []).map(j => j.job).filter(Boolean).slice(0, 2).join(' · ') : '';
+    return `
+    <div class="card ${late ? 'late' : ''} ${c.status === 'done' ? 'done' : ''}">
+      <div class="top">
+        <span class="plate">${esc(prettyReg(c.reg))}</span>
+        <div class="car">${esc([c.make, c.model, c.variant].filter(Boolean).join(' ') || 'Unknown car')}
+          <small>${esc(c.customer || s?.customer || '—')}${jobs ? ' · ' + esc(jobs) : ''}</small></div>
+      </div>
+      <div class="meta">
+        <span class="tag">in ${fmtDate(c.arrived_on)} · ${daysSince(c.arrived_on)}d</span>
+        ${dueTag(s)}
+        ${c.status === 'done' ? '<span class="tag green">ready to collect</span>' : ''}
+      </div>
+      <div class="row">
+        <select class="status" onchange="setStatus('${c.id}', this.value)">
+          ${Object.entries(WORK_STATUS).map(([k, v]) => `<option value="${k}" ${c.status === k ? 'selected' : ''}>${v}</option>`).join('')}
+        </select>
+        ${s ? `<a class="btn sm ghost" href="/hillard-jobsheet.html?open=${s.id}">Job sheet ↗</a>`
+            : `<a class="btn sm ghost" href="/hillard-jobsheet.html?reg=${encodeURIComponent(c.reg)}&customer=${encodeURIComponent(c.customer || '')}&miles=${encodeURIComponent(c.mileage || '')}">＋ Job sheet</a>`}
+        <button class="btn sm ghost" onclick="openEdit('${c.id}')">Edit</button>
+        <span class="grow"></span>
+        <button class="btn sm green" onclick="collected('${c.id}')">Collected</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* Open job sheets whose car isn't on the yard yet = the jobs ahead of us. */
+function renderAhead(work){
+  const onYard = new Set(work.map(c => normReg(c.reg)));
+  const linked = new Set(work.map(c => c.job_sheet_id).filter(Boolean));
+  const ahead = sheets.filter(s => !linked.has(s.id) && !onYard.has(normReg(s.reg)));
+  const box = $('aheadList');
+  if (!ahead.length){ box.innerHTML = '<div class="empty">No open job sheets waiting to come in.</div>'; return; }
+  box.innerHTML = sortByDue(ahead, s => s).map(s => `
+    <div class="card">
+      <div class="top">
+        <span class="plate">${esc(prettyReg(s.reg) || '—')}</span>
+        <div class="car">${esc(s.customer || '—')}
+          <small>${esc((s.jobs || []).map(j => j.job).filter(Boolean).slice(0, 2).join(' · ') || 'no jobs listed')}</small></div>
+      </div>
+      <div class="meta">
+        <span class="tag">sheet ${fmtDate(s.received_date || s.created_at)}</span>
+        ${dueTag(s)}
+      </div>
+      <div class="row">
+        <a class="btn sm ghost" href="/hillard-jobsheet.html?open=${s.id}">Job sheet ↗</a>
+        <span class="grow"></span>
+        ${normReg(s.reg) ? `<button class="btn sm" onclick="arriveFromSheet('${s.id}')">Car arrived</button>` : '<span class="tag amber">add the reg on the sheet first</span>'}
+      </div>
+    </div>`).join('');
+}
+
+async function arrive(e){
+  e.preventDefault();
+  const reg = normReg($('wReg').value);
+  if (!reg){ $('wMsg').textContent = 'Type the reg first.'; return; }
+  if (cars.some(c => c.list === 'workshop' && normReg(c.reg) === reg)){ $('wMsg').textContent = `${prettyReg(reg)} is already on the yard.`; return; }
+  const s = sheets.find(x => normReg(x.reg) === reg);
+  $('wMsg').textContent = 'Adding…';
+  const row = { list:'workshop', reg, status:'waiting', customer: s?.customer || null, job_sheet_id: s?.id || null,
+                mileage: s?.miles ? parseInt(String(s.miles).replace(/[^0-9]/g, ''), 10) || null : null };
+  await fillFromKnown(row);
+  const { error } = await sb.from('yard_cars').insert(row);
+  if (error){ $('wMsg').textContent = error.message; return; }
+  $('wReg').value = ''; $('wMsg').textContent = '';
+  toast(`${prettyReg(reg)} on the yard${s ? ' — job sheet linked' : ' — no job sheet yet'}`);
+  await refresh();
+}
+async function arriveFromSheet(id){
+  const s = sheets.find(x => x.id === id); if (!s) return;
+  const row = { list:'workshop', reg: normReg(s.reg), status:'waiting', customer: s.customer || null, job_sheet_id: s.id,
+                mileage: s.miles ? parseInt(String(s.miles).replace(/[^0-9]/g, ''), 10) || null : null };
+  await fillFromKnown(row);
+  const { error } = await sb.from('yard_cars').insert(row);
+  if (error){ toast(error.message, true); return; }
+  toast(`${prettyReg(row.reg)} on the yard`);
+  await refresh();
+}
+/* Make/model from the customer's garage if we already know the car, else DVLA. */
+async function fillFromKnown(row){
+  try{
+    // stored plates may have a space in them, so compare without it
+    const { data } = await sb.from('vehicles').select('registration,make,model,year,colour')
+      .or(`registration.ilike.${row.reg},registration.ilike.${row.reg.slice(0,4)} ${row.reg.slice(4)}`).limit(5);
+    const v = (data || []).find(x => normReg(x.registration) === row.reg);
+    if (v){ row.make = v.make || null; row.model = v.model || null; row.year = v.year || null; row.colour = v.colour || null; return; }
+  }catch(e){}
+  const d = await dvla(row.reg);
+  if (d){ row.make = d.make; row.model = d.model; row.year = d.year; row.colour = d.colour; if (!row.mileage) row.mileage = d.mileage; }
+}
+async function dvla(reg){
+  try{
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/vehicle-lookup`, { method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + SUPABASE_ANON }, body: JSON.stringify({ vrm: reg }) });
+    const j = await res.json(); const m = j?.Results?.MotHistoryDetails; if (!m) return null;
+    const odo = (m.MotTestDetailsList || []).map(t => parseInt(t.OdometerValue, 10)).find(n => !isNaN(n));
+    return { make: m.Make ? cap(m.Make) : null, model: m.Model ? cap(m.Model) : null, colour: m.Colour ? cap(m.Colour) : null,
+             year: m.FirstUsedDate ? parseInt(m.FirstUsedDate.substring(0, 4), 10) : null, mileage: odo || null };
+  }catch(e){ return null; }
+}
+const cap = s => String(s).toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase());
+
+async function setStatus(id, status){
+  const { error } = await sb.from('yard_cars').update({ status }).eq('id', id);
+  if (error){ toast(error.message, true); return; }
+  const c = cars.find(x => x.id === id); if (c) c.status = status;
+  render();
+}
+async function collected(id){
+  const c = cars.find(x => x.id === id); if (!c) return;
+  if (!confirm(`${prettyReg(c.reg)} collected / gone from the yard?`)) return;
+  const { error } = await sb.from('yard_cars').update({ left_at: new Date().toISOString(), left_by: me }).eq('id', id);
+  if (error){ toast(error.message, true); return; }
+  toast(`${prettyReg(c.reg)} off the yard`);
+  await refresh();
+}
+
+/* ---------------- BREAKERS ---------------- */
+function renderBreak(brk){
+  const box = $('breakList');
+  if (!brk.length){ box.innerHTML = '<div class="empty">No cars in stock. Type a reg above to add one.</div>'; return; }
+  box.innerHTML = brk.map(c => `
+    <div class="card">
+      <div class="top">
+        <span class="plate">${esc(prettyReg(c.reg))}</span>
+        <div class="car">${esc([c.make, c.model, c.variant].filter(Boolean).join(' ') || 'Unknown car')}
+          <small>${esc([c.engine, c.year, c.mileage ? Number(c.mileage).toLocaleString() + ' mi' : '', c.colour].filter(Boolean).join(' · ') || 'no spec yet — tap Edit')}</small></div>
+      </div>
+      <div class="meta">
+        <span class="tag">in ${fmtDate(c.arrived_on)} · ${daysSince(c.arrived_on)}d</span>
+        ${c.condition ? `<span class="tag">${esc(c.condition)}</span>` : '<span class="tag amber">no condition noted</span>'}
+      </div>
+      <div class="row">
+        <select class="status" onchange="setStatus('${c.id}', this.value)">
+          ${Object.entries(BREAK_STATUS).map(([k, v]) => `<option value="${k}" ${c.status === k ? 'selected' : ''}>${v}</option>`).join('')}
+        </select>
+        <label class="check"><input type="checkbox" ${c.engine_listed ? 'checked' : ''} onchange="setListed('${c.id}', this.checked)"> Engine listed</label>
+        <button class="btn sm ghost" onclick="openEdit('${c.id}')">Edit</button>
+        <span class="grow"></span>
+        <button class="btn sm green" onclick="collected('${c.id}')">Gone</button>
+      </div>
+    </div>`).join('');
+}
+async function addBreaker(e){
+  e.preventDefault();
+  const reg = normReg($('bReg').value);
+  if (!reg){ $('bMsg').textContent = 'Type the reg first.'; return; }
+  if (cars.some(c => c.list === 'breakers' && normReg(c.reg) === reg)){ $('bMsg').textContent = `${prettyReg(reg)} is already in stock.`; return; }
+  $('bMsg').textContent = 'Looking up…';
+  const d = await dvla(reg);
+  $('bMsg').textContent = d ? `Found ${d.make || ''} ${d.model || ''} — add the spec and condition.` : 'No DVLA match — fill it in by hand.';
+  editing = { list:'breakers', reg, status:'arrived', make:d?.make, model:d?.model, year:d?.year, colour:d?.colour, mileage:d?.mileage };
+  openEdit(null);
+}
+async function setListed(id, on){
+  const { error } = await sb.from('yard_cars').update({ engine_listed: on }).eq('id', id);
+  if (error){ toast(error.message, true); return; }
+  const c = cars.find(x => x.id === id); if (c) c.engine_listed = on;
+  render();
+}
+
+/* ---------------- EDIT SHEET ---------------- */
+function openEdit(id){
+  if (id){ editing = cars.find(x => x.id === id); }
+  const c = editing; if (!c) return;
+  $('shTitle').textContent = c.id ? `Edit ${prettyReg(c.reg)}` : (c.list === 'breakers' ? 'Add to breakers stock' : 'Add car');
+  ['reg','make','model','variant','engine','year','mileage','colour','customer','condition','notes'].forEach(k => $('e_' + k).value = c[k] ?? '');
+  $('f_customer').classList.toggle('hide', c.list === 'breakers');
+  $('f_condition').classList.toggle('hide', c.list !== 'breakers');
+  $('eDelete').classList.toggle('hide', !c.id);
+  $('eMsg').textContent = '';
+  $('sheet').classList.add('on');
+}
+function closeSheet(){ $('sheet').classList.remove('on'); editing = null; $('bReg').value = ''; $('bMsg').textContent = ''; }
+async function lookupInto(){
+  const reg = normReg($('e_reg').value); if (!reg) return;
+  $('eMsg').textContent = 'Looking up…';
+  const d = await dvla(reg);
+  if (!d){ $('eMsg').textContent = 'No DVLA match.'; return; }
+  if (d.make) $('e_make').value = d.make; if (d.model) $('e_model').value = d.model;
+  if (d.year) $('e_year').value = d.year; if (d.colour) $('e_colour').value = d.colour;
+  if (d.mileage && !$('e_mileage').value) $('e_mileage').value = d.mileage;
+  $('eMsg').textContent = `Found ${d.make || ''} ${d.model || ''}`;
+}
+async function saveSheet(){
+  const c = editing; if (!c) return;
+  const row = { list: c.list, status: c.status || (c.list === 'breakers' ? 'arrived' : 'waiting') };
+  ['make','model','variant','engine','colour','customer','condition','notes'].forEach(k => row[k] = $('e_' + k).value.trim() || null);
+  row.reg = normReg($('e_reg').value);
+  row.year = parseInt($('e_year').value, 10) || null;
+  row.mileage = parseInt(String($('e_mileage').value).replace(/[^0-9]/g, ''), 10) || null;
+  if (!row.reg){ $('eMsg').textContent = 'Reg is required.'; return; }
+  const q = c.id ? sb.from('yard_cars').update(row).eq('id', c.id) : sb.from('yard_cars').insert(row);
+  const { error } = await q;
+  if (error){ $('eMsg').textContent = error.message; return; }
+  toast(c.id ? 'Saved' : `${prettyReg(row.reg)} added`);
+  closeSheet();
+  await refresh();
+}
+async function deleteCar(){
+  const c = editing; if (!c?.id) return;
+  if (!confirm(`Delete ${prettyReg(c.reg)} from the yard list? (Use Collected / Gone if it just left.)`)) return;
+  const { error } = await sb.from('yard_cars').delete().eq('id', c.id);
+  if (error){ $('eMsg').textContent = error.message; return; }
+  closeSheet(); await refresh();
+}
+
+/* ---------------- WALK THE YARD ---------------- */
+function startWalk(){ walkSeen = new Set(); renderWalk(); }
+function renderWalk(){
+  const list = cars.slice().sort((a, b) => b.list.localeCompare(a.list) || normReg(a.reg).localeCompare(normReg(b.reg)))  // workshop first;
+  $('walkCount').textContent = `${walkSeen.size} / ${list.length}`;
+  const box = $('walkList');
+  if (!list.length){ box.innerHTML = '<div class="empty">Nothing on the yard to walk.</div>'; return; }
+  let lastList = '';
+  box.innerHTML = list.map(c => {
+    const head = c.list !== lastList ? `<div class="section">${c.list === 'workshop' ? 'Workshop' : 'Breakers'}</div>` : '';
+    lastList = c.list;
+    const seen = walkSeen.has(c.id);
+    return head + `
+    <div class="card ${seen ? 'seen' : ''}">
+      <span class="plate">${esc(prettyReg(c.reg))}</span>
+      <div class="car">${esc([c.make, c.model, c.variant].filter(Boolean).join(' ') || '—')}
+        <small>${esc(c.list === 'workshop' ? (WORK_STATUS[c.status] || c.status) : (BREAK_STATUS[c.status] || c.status))}${c.last_seen_at ? ' · last seen ' + fmtDate(c.last_seen_at) : ''}</small></div>
+      ${c.list === 'breakers' ? `<label class="check"><input type="checkbox" ${c.engine_listed ? 'checked' : ''} onchange="setListed('${c.id}', this.checked)"> Engine listed</label>` : ''}
+      <div class="bigbtns">
+        <button class="btn ${seen ? 'ghost' : 'green'}" onclick="walkHere('${c.id}')">${seen ? '✓ Here' : 'Here'}</button>
+        <button class="btn red" onclick="collected('${c.id}')">Gone</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function walkHere(id){
+  walkSeen.add(id);
+  const c = cars.find(x => x.id === id); if (c) c.last_seen_at = new Date().toISOString();
+  renderWalk();
+  await sb.from('yard_cars').update({ last_seen_at: new Date().toISOString(), last_seen_by: me }).eq('id', id);
+}
+function finishWalk(){
+  const missing = cars.filter(c => !walkSeen.has(c.id));
+  if (!missing.length){ toast('Walk done — everything accounted for'); return; }
+  alert(`Walk done. Not seen (${missing.length}):\n\n` + missing.map(c => `${prettyReg(c.reg)} — ${[c.make, c.model].filter(Boolean).join(' ')} (${c.list})`).join('\n') + `\n\nMark them Gone if they've left, or check again.`);
+}
+
+init();
+</script>
+</body>
+</html>
