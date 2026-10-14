@@ -238,7 +238,7 @@ async function refresh(){
   const [a, b] = await Promise.all([
     sb.from('yard_cars').select('*').is('left_at', null).order('arrived_on'),
     sb.from('job_sheets').select('id,reg,customer,miles,required_date,received_date,status,zoho_invoice_id,created_at,jobs')
-      .is('zoho_invoice_id', null).neq('status', 'invoiced').order('created_at', {ascending:false})
+      .is('zoho_invoice_id', null).neq('status', 'invoiced').is('archived_at', null).order('created_at', {ascending:false})
   ]);
   if (a.error) toast('Load failed: ' + a.error.message, true);
   cars = a.data || [];
@@ -343,6 +343,7 @@ function renderAhead(work){
       </div>
       <div class="row">
         <a class="btn sm ghost" href="/hillard-jobsheet.html?open=${s.id}">Job sheet ↗</a>
+        <button class="btn sm ghost" onclick="archiveSheet('${s.id}')" title="Hide this sheet — it stays under Archived on the job sheets page">Archive</button>
         <span class="grow"></span>
         ${normReg(s.reg) ? `<button class="btn sm" onclick="arriveFromSheet('${s.id}')">Car arrived</button>` : '<span class="tag amber">add the reg on the sheet first</span>'}
       </div>
@@ -375,6 +376,16 @@ async function arriveFromSheet(id){
   toast(`${prettyReg(row.reg)} on the yard`);
   await refresh();
 }
+/* Archive a job sheet that's not coming in — it stays viewable under Archived on the job sheets page. */
+async function archiveSheet(id){
+  const s = sheets.find(x => x.id === id); if (!s) return;
+  if (!confirm(`Archive the job sheet for ${s.customer || prettyReg(s.reg) || 'this car'}? It leaves the lists here and on job sheets, but you can still view or restore it from Archived.`)) return;
+  const { error } = await sb.from('job_sheets').update({ archived_at: new Date().toISOString() }).eq('id', id);
+  if (error){ toast(error.message, true); return; }
+  toast('Archived');
+  await refresh();
+}
+
 /* Make/model from the customer's garage if we already know the car, else DVLA. */
 async function fillFromKnown(row){
   try{
