@@ -1,0 +1,3 @@
+# CLAUDE.md
+
+See AGENTS.md and STATE_MACHINES.md.

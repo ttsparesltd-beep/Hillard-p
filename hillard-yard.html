@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Yard — Hillard Performance</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/hillard-states.js"></script>
 <style>
   :root{
     --ink:#0d1117; --panel:#151b23; --panel-2:#1b232d; --line:#26303c;
@@ -204,8 +205,10 @@ const prettyReg = s => { const r = normReg(s); return /^[A-Z]{2}[0-9]{2}[A-Z]{3}
 const fmtDate = d => d ? new Date(d.length === 10 ? d + 'T00:00:00' : d).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : '';
 const daysSince = d => Math.floor((Date.now() - new Date(d.length === 10 ? d + 'T00:00:00' : d)) / 86400000);
 
-const WORK_STATUS  = { waiting:'Waiting', on_ramp:'On ramp', done:'Done — awaiting collection' };
-const BREAK_STATUS = { arrived:'Arrived', stripping:'Stripping', shell_gone:'Shell gone' };
+// Status lists live in hillard-states.js (and are enforced by the database).
+// The literals are a fallback in case that file is missing.
+const WORK_STATUS  = (window.HP_STATES && HP_STATES.labels('yardWorkshop')) || { waiting:'Waiting', on_ramp:'On ramp', done:'Done — awaiting collection' };
+const BREAK_STATUS = (window.HP_STATES && HP_STATES.labels('yardBreakers')) || { arrived:'Arrived', stripping:'Stripping', shell_gone:'Shell gone' };
 
 let me = null;          // staff email
 let cars = [];          // active yard_cars

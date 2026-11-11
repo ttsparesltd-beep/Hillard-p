@@ -461,6 +461,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 
 <div class="toast" id="toast"></div>
 
+<script src="/hillard-states.js"></script>
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -509,6 +510,17 @@ async function loadAll() {
   allBookings = bk.data || []
   allInvoices = inv.data || []
   allQuotes = qt.data || []
+  // The quotes table was never created in the database, so the Quotes feature
+  // can't save anything. Hide its entry points until it exists (see STATE_MACHINES.md).
+  window.QUOTES_ENABLED = !qt.error
+  if (!window.QUOTES_ENABLED) {
+    document.querySelectorAll('[onclick^="showPanel(\'quotes\')"], [onclick^="openQuotePanel"]').forEach(el => el.style.display = 'none')
+    if (!document.getElementById('hp-hide-quotes')) {
+      const st = document.createElement('style'); st.id = 'hp-hide-quotes'
+      st.textContent = 'button[title="Create Quote"]{display:none!important}'
+      document.head.appendChild(st)
+    }
+  }
   allCustomers = cust.data || []
   allVehicles = veh.data || []
 
@@ -655,15 +667,17 @@ window.openBookingDetail = function(id) {
         <div class="field"><label>Type</label><div style="font-size:13px;padding:6px 0;">${b.repair_type||'—'}</div></div>
         <div class="field"><label>Description</label><div style="font-size:13px;padding:6px 0;white-space:pre-wrap;">${b.description||'No description'}</div></div>
         <div class="field"><label>Preferred Date</label><div style="font-size:13px;padding:6px 0;">${fmt(b.preferred_date)}</div></div>
+        ${b.confirmed_date ? `<div class="field"><label>Confirmed Date</label><div style="font-size:13px;padding:6px 0;">${fmt(b.confirmed_date)}</div></div>` : ''}
         ${b.photo_url ? `<div class="field"><label>Photo</label><img src="${b.photo_url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid var(--border);margin-top:4px;"></div>` : ''}
       </div>
       <div class="sp-section">
         <div class="sp-section-title">Update Status</div>
         <div class="field">
           <select id="booking-status" style="font-size:13px;">
-            ${['pending','confirmed','in_progress','completed','cancelled'].map(s => `<option value="${s}" ${b.status===s?'selected':''}>${s.replace(/_/g,' ')}</option>`).join('')}
+            ${bookingStatusOptions(b.status).map(s => `<option value="${s}" ${b.status===s?'selected':''}>${s===b.status?'':'→ '}${bookingLabel(s)}</option>`).join('')}
           </select>
         </div>
+        ${b.status==='pending' ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">Confirming emails the customer their confirmation.</div>` : ''}
       </div>
       <div class="sp-actions">
         <button class="btn-cancel" onclick="closePanel()">Close</button>
@@ -673,11 +687,34 @@ window.openBookingDetail = function(id) {
   document.getElementById('modal-overlay').classList.add('open')
 }
 
+// Booking statuses come from hillard-states.js (fallback: the full list).
+const BOOKING_ALL = ['pending','confirmed','in_progress','completed','cancelled']
+function bookingStatusOptions(cur) {
+  return window.HP_STATES ? window.HP_STATES.options('booking', cur || 'pending') : BOOKING_ALL
+}
+function bookingLabel(s) {
+  return window.HP_STATES ? window.HP_STATES.label('booking', s) : String(s||'').replace(/_/g,' ')
+}
+
 window.updateBookingStatus = async function(id) {
   const status = document.getElementById('booking-status').value
-  const { error } = await supabase.from('bookings').update({ status }).eq('id', id)
-  if (error) { showToast('Error: ' + error.message); return }
-  showToast('Booking updated')
+  const b = allBookings.find(x => x.id === id)
+  if (b && b.status === status) { closePanel(); return }
+  if (b && b.status === 'pending' && status === 'confirmed') {
+    // Same path as the email link: confirms once and emails the customer.
+    try {
+      const res = await fetch(`${SUPA_URL}/functions/v1/booking-confirm`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id })
+      })
+      const r = await res.json()
+      if (!r.ok) { showToast('Error: ' + (r.error || res.status)); return }
+      showToast(r.already ? 'Already confirmed' : (r.emailed ? 'Confirmed — customer emailed' : 'Confirmed (no customer email on file)'))
+    } catch (e) { showToast('Error: ' + e.message); return }
+  } else {
+    const { error } = await supabase.from('bookings').update({ status }).eq('id', id)
+    if (error) { showToast('Error: ' + error.message); return }
+    showToast('Booking updated')
+  }
   closePanel()
   await loadAll()
   if (currentPanel === 'bookings') renderBookings()

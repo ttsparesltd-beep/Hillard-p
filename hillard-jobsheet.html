@@ -17,6 +17,7 @@
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/hillard-states.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -781,7 +782,7 @@ async function loadList(){
    Invoiced sheets leave the main list so the "Jobs ahead" view only shows work
    still to do, soonest required date first. */
 let listBucket='open';
-function isInvoiced(r){ return r.status==='invoiced' || !!r.zoho_invoice_id; }
+function isInvoiced(r){ return window.HP_STATES ? HP_STATES.machine('jobSheet').isInvoiced(r) : (r.status==='invoiced' || !!r.zoho_invoice_id); }
 function setBucket(b,el){
   listBucket=b;
   document.querySelectorAll('#listSeg button').forEach(x=>x.classList.toggle('active',x===el));
@@ -831,7 +832,7 @@ function renderList(){
         <div class="who">${escHtml(r.customer||'—')}</div>
         <div class="meta">${escHtml(r.reg||'no reg')} · ${(r.jobs||[]).length} job(s) · in ${new Date(r.received_date?r.received_date+'T00:00:00':r.created_at).toLocaleDateString('en-GB')}</div>
         ${r.archived_at?`<div class="due">archived ${new Date(r.archived_at).toLocaleDateString('en-GB')}</div>`:isInvoiced(r)?(r.invoiced_at?`<div class="due">invoiced ${new Date(r.invoiced_at).toLocaleDateString('en-GB')}</div>`:''):dueLabel(r)}
-        ${r.archived_at?'<span class="pill archived">Archived</span> ':''}<span class="pill ${isInvoiced(r)?'invoiced':(r.status||'open')}">${isInvoiced(r)?'Invoiced':(({open:'Booked',progress:'In Progress',done:'Done'})[r.status||'open']||r.status)}</span>${r.zoho_invoice_number?` <span class="pill done">${escHtml(r.zoho_invoice_number)}</span>`:''}${r.service_checks?` <span class="pill progress">✓ check sheet</span>`:''}
+        ${r.archived_at?'<span class="pill archived">Archived</span> ':''}<span class="pill ${isInvoiced(r)?'invoiced':(r.status||'open')}">${isInvoiced(r)?'Invoiced':(window.HP_STATES ? HP_STATES.label('jobSheet', r.status||'open') : (({open:'Booked',progress:'In Progress',done:'Done'})[r.status||'open']||r.status))}</span>${r.zoho_invoice_number?` <span class="pill done">${escHtml(r.zoho_invoice_number)}</span>`:''}${r.service_checks?` <span class="pill progress">✓ check sheet</span>`:''}
       </div>
       <div class="right"><div class="price">${money(r.total||0)}</div></div>
     </div>`).join('');

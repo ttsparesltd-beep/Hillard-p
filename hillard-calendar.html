@@ -187,13 +187,14 @@ async function loadEvents() {
     .order('preferred_date', { ascending: true })
 
   for (const b of (bookings || [])) {
+    if (b.status === 'cancelled') continue
     const useDate = b.confirmed_date || b.preferred_date
     if (!useDate) continue
     // Match vehicle from already-loaded vehicles list
     const matchedVehicle = (await sbClient.from('vehicles').select('registration,make,model').eq('id', b.vehicle_id).single()).data
     const vLabel = matchedVehicle ? [matchedVehicle.make, matchedVehicle.model, matchedVehicle.registration].filter(Boolean).join(' ') : ''
     const isPast = new Date(useDate) < new Date()
-    const isConfirmed = b.status === 'confirmed'
+    const isConfirmed = ['confirmed', 'in_progress', 'completed'].includes(b.status)
     let type, color
     if (isPast) { type = 'history'; color = '#4ade80' }
     else if (isConfirmed) { type = 'booking'; color = '#4ade80' }

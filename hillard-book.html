@@ -155,9 +155,9 @@ body{background:var(--bg);color:var(--text);font-family:"DM Sans",sans-serif;min
       </div>
       <div class="fs-body">
         <div class="photo-zone" id="photo-zone" ondragover="event.preventDefault()" ondragleave="" ondrop="photoDrop(event)">
-          <input type="file" accept="image/*" capture="environment" onchange="photoSelect(this.files[0])">
+          <input type="file" accept="image/*" onchange="photoSelect(this.files[0])">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <p>Tap to photograph or upload<br><span style="font-size:11px;color:#3a3a45;">Helps us give a more accurate quote</span></p>
+          <p>Tap to take a photo or choose one from your phone<br><span style="font-size:11px;color:#3a3a45;">Helps us give a more accurate quote</span></p>
         </div>
         <div class="photo-preview" id="photo-preview">
           <img id="photo-img" src="" alt="Issue photo">
