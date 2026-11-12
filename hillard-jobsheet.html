@@ -422,6 +422,7 @@
       <button class="btn btn-primary" id="saveBtn" onclick="saveSheet()">💾 Save Job Sheet</button>
       <button class="btn btn-ghost" id="invoiceBtn" style="display:none;" onclick="createZohoInvoice()">📄 Create Zoho invoice</button>
       <button class="btn btn-ghost" onclick="printSheet()">🖨 Print</button>
+      <button class="btn btn-ghost" id="custCheckBtn" style="display:none;" onclick="printCustomerCheck()">🖨 Customer check sheet</button>
       <button class="btn btn-ghost" onclick="newSheet()">＋ New / Clear</button>
       <button class="btn btn-danger" id="deleteBtn" style="display:none;" onclick="archiveSheet()">🗄 Archive</button>
       <button class="btn btn-ghost" id="restoreBtn" style="display:none;" onclick="restoreSheet()">↩ Restore from archive</button>
@@ -572,6 +573,7 @@ let svcState = {};   // key -> { s:'g'|'a'|'r', n:'' }
 
 function toggleSvc(){
   const on=document.getElementById('svcOn').checked;
+  document.getElementById('custCheckBtn').style.display=on?'':'none';
   document.getElementById('svcPanel').hidden=!on;
   if(on && !document.getElementById('svcGroups').children.length) renderSvc();
   updateSvcSummary();
@@ -642,6 +644,7 @@ function fillSvc(d){
   const on=!!sc;
   document.getElementById('svcOn').checked=on;
   document.getElementById('svcPanel').hidden=!on;
+  document.getElementById('custCheckBtn').style.display=on?'':'none';
   document.getElementById('svcGroups').innerHTML='';
   if(on) renderSvc();
 }
@@ -949,6 +952,117 @@ async function restoreSheet(){
 /*  PRINT + TOAST                                                    */
 /* ---------------------------------------------------------------- */
 function printSheet(){window.print();}
+
+/* ---------------------------------------------------------------- */
+/*  CUSTOMER CHECK SHEET (printable, no prices)                      */
+/*  Built from what's on screen, so it works before or after saving. */
+/*  Shows customer + car + the 30-point results and advisories only. */
+/*  Labour, parts, prices, rate and phone numbers are never included.*/
+/* ---------------------------------------------------------------- */
+async function printCustomerCheck(){
+  const w=window.open('','_blank');               // open now, inside the click, so it isn't blocked
+  if(!w){ toast('Allow pop-ups to print the check sheet'); return; }
+  w.document.write('<p style="font-family:sans-serif;padding:20px">Preparing check sheet…</p>');
+
+  const h=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const reg=val('reg').toUpperCase().replace(/\s+/g,'');
+  const prettyReg=reg.length>4?reg.slice(0,-3)+' '+reg.slice(-3):reg;
+  const fmtD=d=>d?new Date(d+(d.length===10?'T12:00:00':'')).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'—';
+  const milesNum=parseInt(String(val('miles')).replace(/[^0-9]/g,''),10);
+
+  // Make / model from the portal's vehicle record, then the yard, else blank.
+  let car='';
+  try{
+    if(sb&&reg){
+      let r=await sb.from('vehicles').select('make,model,year,colour').eq('registration',reg).limit(1);
+      let v=r.data&&r.data[0];
+      if(!v){ r=await sb.from('yard_cars').select('make,model,year,colour').eq('reg',reg).order('created_at',{ascending:false}).limit(1); v=r.data&&r.data[0]; }
+      if(v) car=[v.year,v.make,v.model].filter(Boolean).join(' ')+(v.colour?` · ${v.colour}`:'');
+    }
+  }catch(e){}
+
+  const STATUS={g:['OK','#1c8f4e','✓'],a:['Advisory','#c07d0b','!'],r:['Urgent','#c9271b','✕']};
+  let ok=0,adv=0,urg=0,unchecked=0;
+  const groups=SVC_TEMPLATE.map(gr=>`
+    <div class="grp"><div class="gh">${h(gr.g)}</div>
+    ${gr.items.map(([k,label])=>{
+      const st=svcState[k]||{}; const s=STATUS[st.s];
+      if(st.s==='g')ok++; else if(st.s==='a')adv++; else if(st.s==='r')urg++; else unchecked++;
+      return `<div class="it"><span class="dot" style="${s?`background:${s[1]}`:'background:#fff;border:1.5px solid #bbb'}">${s?s[2]:''}</span>
+        <span class="nm">${h(label)}${st.n&&st.s!=='g'?`<small>${h(st.n)}</small>`:''}</span>
+        <span class="st" style="color:${s?s[1]:'#999'}">${s?s[0]:'Not checked'}</span></div>`;
+    }).join('')}</div>`).join('');
+
+  const flagged=[];
+  for(const want of ['r','a']) for(const gr of SVC_TEMPLATE) for(const [k,label] of gr.items){
+    const st=svcState[k]; if(st&&st.s===want) flagged.push(`<li><b style="color:${STATUS[want][1]}">${STATUS[want][0]}:</b> ${h(label)}${st.n?` — ${h(st.n)}`:''}</li>`);
+  }
+  const nd=svcNextDue();
+
+  const doc=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Vehicle health check — ${h(prettyReg)}</title>
+<style>
+  @page{size:A4;margin:12mm}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#111;font-size:11.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #111;padding-bottom:10px;margin-bottom:12px}
+  .top img{height:46px;filter:invert(1)}
+  .top .c{text-align:right;font-size:11px;line-height:1.5;color:#444}
+  h1{font-size:19px;letter-spacing:.02em}
+  .sub{color:#555;margin:2px 0 12px}
+  .info{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #ccc;border-radius:6px;margin-bottom:12px}
+  .info div{padding:7px 10px;border-right:1px solid #e3e3e3;border-bottom:1px solid #e3e3e3}
+  .info div:nth-child(3n){border-right:none}.info div:nth-last-child(-n+3){border-bottom:none}
+  .info span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#777}
+  .info b{font-size:13px}.plate{background:#ffd500;border:1px solid #111;padding:1px 6px;border-radius:3px;letter-spacing:.06em}
+  .sum{display:flex;gap:8px;margin-bottom:12px}
+  .sum div{flex:1;border-radius:6px;padding:8px;text-align:center;color:#fff;font-weight:700;font-size:12px}
+  .sum b{display:block;font-size:20px}
+  .cols{columns:2;column-gap:14px}
+  .grp{break-inside:avoid;margin-bottom:10px;border:1px solid #ddd;border-radius:6px;overflow:hidden}
+  .gh{background:#f0f0f0;font-weight:700;padding:5px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  .it{display:flex;align-items:flex-start;gap:7px;padding:5px 8px;border-top:1px solid #eee}
+  .dot{flex:0 0 15px;height:15px;border-radius:50%;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .nm{flex:1}.nm small{display:block;color:#555;font-size:10.5px;margin-top:1px}
+  .st{font-weight:700;font-size:10.5px;white-space:nowrap}
+  .box{border:1px solid #ccc;border-radius:6px;padding:9px 12px;margin-top:4px;break-inside:avoid}
+  .box h2{font-size:12.5px;margin-bottom:5px}.box li{margin:3px 0 3px 16px}
+  .foot{margin-top:12px;display:flex;justify-content:space-between;gap:16px;font-size:10.5px;color:#555;break-inside:avoid}
+  .sig{border-bottom:1px solid #999;width:200px;height:26px}
+  @media screen{body{max-width:800px;margin:20px auto;padding:0 16px}}
+</style></head><body>
+  <div class="top">
+    <img src="${location.origin}/logo.png" alt="Hillard Performance">
+    <div class="c"><b>Hillard Performance</b><br>01270 295285<br>hillardperformance.com</div>
+  </div>
+  <h1>Vehicle Health Check</h1>
+  <div class="sub">30-point service inspection</div>
+  <div class="info">
+    <div><span>Customer</span><b>${h(val('customer')||'—')}</b></div>
+    <div><span>Registration</span><b class="plate">${h(prettyReg||'—')}</b></div>
+    <div><span>Vehicle</span><b>${h(car||'—')}</b></div>
+    <div><span>Mileage</span><b>${milesNum>0?milesNum.toLocaleString('en-GB'):'—'}</b></div>
+    <div><span>Inspected</span><b>${fmtD(val('received'))}</b></div>
+    <div><span>Next service due</span><b>${fmtD(nd.date)}${nd.miles?` or ${nd.miles.toLocaleString('en-GB')} mi`:''}</b></div>
+  </div>
+  <div class="sum">
+    <div style="background:#1c8f4e"><b>${ok}</b>OK</div>
+    <div style="background:#c07d0b"><b>${adv}</b>Advisory</div>
+    <div style="background:#c9271b"><b>${urg}</b>Urgent</div>
+    ${unchecked?`<div style="background:#888"><b>${unchecked}</b>Not checked</div>`:''}
+  </div>
+  <div class="cols">${groups}</div>
+  <div class="box"><h2>${flagged.length?'Work we recommend':'All checked items passed'}</h2>
+    ${flagged.length?`<ul>${flagged.join('')}</ul>`:'<p>No advisories at this inspection.</p>'}
+  </div>
+  <div class="foot">
+    <div><b>Key:</b> ✓ OK — no action needed · ! Advisory — keep an eye on it / plan to replace · ✕ Urgent — needs attention now</div>
+    <div>Technician<div class="sig"></div></div>
+  </div>
+  <script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script>
+</body></html>`;
+  w.document.open(); w.document.write(doc); w.document.close();
+}
+
 let toastT;
 function toast(msg,err){
   const t=document.getElementById('toast');
